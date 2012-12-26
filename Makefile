@@ -346,6 +346,8 @@ ${WRKDIR}/.config_done:
 		${INSTALL} ${CFGDIR}/authorized_keys ${_DESTDIR}/root/.ssh/; \
 	fi
 	@${MKDIR} ${_DESTDIR}/root/bin
+	@${INSTALL} ${TOOLSDIR}/hc-install ${_DESTDIR}/root/bin
+	@${INSTALL} ${TOOLSDIR}/hc-wipedisks ${_DESTDIR}/root/bin
 	@${INSTALL} ${TOOLSDIR}/zfsinstall ${_DESTDIR}/root/bin
 	@${INSTALL} ${TOOLSDIR}/destroygeom ${_DESTDIR}/root/bin
 	@for SCRIPT in ${SCRIPTS}; do \

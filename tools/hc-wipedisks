@@ -1,0 +1,19 @@
+#!/usr/local/bin/bash
+echo ""
+echo "WARNING: This script is about to render this server unbootable and"
+echo "destroy all data on it.  If this is not what you intended, hit Ctrl+C in"
+echo "the next 5 seconds"
+echo ""
+sleep 5
+sysctl kern.geom.debugflags=16
+for X in `ls -1 /dev/ad* /dev/da* /dev/twed* /dev/aacd* /dev/mfid* /dev/amrd* 2>/dev/null | grep -E '[a-z]{2}[0-9]+$'`; do
+	echo "Wiping $X..."
+	destroygeom -d $X &>/dev/null
+	gmirror clear $X &>/dev/null
+	# Zero out the first 10 meg
+	dd if=/dev/zero of=$X bs=1024 count=10240 &>/dev/null
+	# And the last 10 meg
+	skip=$(echo `diskinfo $X | cut -f 3` / 1024 - 10240 | bc)
+	dd if=/dev/zero of=$X bs=1024 count=10240 seek=$skip &>/dev/null
+done
+echo "Done.  You can now continue with the installation."

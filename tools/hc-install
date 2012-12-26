@@ -1,0 +1,714 @@
+#!/usr/bin/env bash
+
+# TODO: Change this to 28 if we start installing onto FreeBSD 8.3 or later.
+ZFS_VERSION=15
+
+function hybrid_header()
+{
+clear
+echo ""
+echo ""
+echo "                          Hybrid Cluster Installer"
+echo ""
+echo "    Your cluster node will be installed now, this will take some time"
+echo "                You can abort at any time with CTRL+C ..."
+echo ""
+}
+
+function delete_all_hdd_ufs()
+{
+check_zpool
+check_mirror_active
+i=0
+for anzahl in ${hdds[@]}; do
+	destroygeom -d ${a[$i]} &>/dev/null
+	gmirror clear ${a[$i]} &>/dev/null
+        dd if=/dev/zero of=${a[$i]} bs=512 count=32 &>/dev/null
+        let i+=1
+done
+}
+
+function delete_selected_hdd_ufs()
+{
+check_zpool
+check_mirror_active
+i=0
+for anzahl in ${hdds_to_delete_array[@]}; do
+	destroygeom -d ${hdds_to_delete_array[$i]} &>/dev/null
+	gmirror clear ${hdds_to_delete_array[$i]} &>/dev/null
+	dd if=/dev/zero of=${hdds_to_delete_array[$i]} bs=512 count=32 &>/dev/null
+	let i+=1
+done
+}
+
+function check_zpool()
+{
+zpool list rpool &>/dev/null
+if [ $? == "0" ]; then
+	error_zpool
+fi
+
+zpool import rpool &>/dev/null
+if [ $? == "0" ]; then
+	error_zpool
+fi
+}
+ 
+function fstab()
+{
+if [ $filesystem == "1" ]; then
+        if [ ${#hdds[@]} == "2" ]; then
+                letter="/dev/mirror/gm${gm_number[@]}"
+        fi
+        if [ ${#hdds[@]} == "1" ]; then
+                letter="${hdds_to_delete_array[@]}"
+        fi
+fi
+
+cat > /mnt/etc/fstab << EOF
+# dev              mnt       type    opt       dump   pass
+${letter}p2     none      swap    sw        0      0
+${letter}p3        /         ufs     rw        1      1
+EOF
+}
+
+function error_ufs()
+{
+dialog --msgbox "There is an active Software Raid and \
+you have selected only one hard drive to install.\n\n\
+Option 1: Please select at least 2 hard drives to reinstall FreeBSD\n\
+          with Software Raid. In this case both hard drives will be deleted!\n\n\
+Option 2: Please restart FreeBSD Rescue, Do not activate Software Raid and\n\
+          run installimage again. Then you will be able to install FreeBSD without\n\
+          Software Raid and all your data on the other hard drive will be untouched" 15 95
+exit 1
+}
+
+function error_zpool()
+{
+dialog --menu "Unfortunately your hard drives are not empty. There is an existing zpool\n\
+Would you like to keep all your data or you want to destroy zpool?" 15 80 5 \
+        0 "I'm not sure" \
+        1 "I would like to KEEP all my data" \
+        2 "I would like to DELETE all my data" \
+	3 "Exit" \
+	2>$tmpfile
+
+if [ $? == "1" ]; then
+        echo cancelled
+        exit 1
+fi
+answer=`cat $tmpfile`
+
+if [ $answer == "0" ]; then
+	clear
+	long_message
+	exit 1
+fi
+
+if [ $answer == "1" ]; then
+	clear
+	long_message
+	exit 1
+fi
+
+if [ $answer == "2" ]; then
+	clear
+	hetzner_header
+	zpool destroy rpool &>/dev/null
+	if [ $? == "1" ]; then
+		zpool destroy rpool &>/dev/null
+	fi	
+fi
+
+if [ $answer == "3" ]; then
+        clear
+        long_message
+        exit 1
+fi
+}
+
+function long_message()
+{
+dialog --msgbox "If you would like to keep your data please \
+rename your zpool to a different name\nand \
+you will be able to install a new operating system on your server\n\n\
+The easiest way to rename your zpool is:\n\n\
+1.Step:  zpool export rpool\n\
+2.Step:  zpool import -R /mnt oldrpool\n\n\
+When you have finished that please run installimage again." 15 90
+exit 1
+}
+
+function check_mirror_active()
+{
+#Es wird geprueft, ob ein Software Raid aktiv ist
+
+ls -1 /dev/mirror/gm* &>/dev/null
+
+if [ $? == "0" ]; then
+        if [ ${#hdds_to_delete_array[@]} == 1 ]; then
+		error_ufs
+	fi
+	gm_number=(`ls -1 /dev/mirror/ | grep -E '[a-z]{2}[0-9]+$' | sed 's/gm//g'`)
+	i="${#hdds_to_delete_array[@]}"
+	let i-=1
+	for anzahl in ${hdds_to_delete_array[@]}; do
+		b=(`echo "${hdds_to_delete_array[$i]}" | sed 's/\/dev\///g'`)
+		#gmirror forget gm${gm_number[@]} $b &>/dev/null
+		gmirror remove gm${gm_number[@]} $b &>/dev/null
+		gmirror clear ${hdds_to_delete_array[$i]} &>/dev/null
+		destroygeom -d ${hdds_to_delete_array[$i]} &>/dev/null
+		dd if=/dev/zero of=${hdds_to_delete_array[$i]} bs=512 count=32 &>/dev/null
+		let i-=1
+	done
+        let gm_number+=1
+fi
+}
+
+function create_software_raid_1()
+{
+
+sysctl kern.geom.debugflags=16
+
+#i=0
+#for anzahl in ${hdds[@]}; do
+#        gmirror label -vb round-robin gm${gm_number[@]} ${a[i]}
+#        if [ $? == 1 ]; then
+#                dialog --msgbox "Can't store metadata" 5 35
+#                exit 1
+#        fi
+#        let i+=1
+#done
+
+#gm_number="0"
+
+#check_mirror_active
+
+gmirror label -vb round-robin gm${gm_number[@]} ${hdds_to_delete_array[0]} &>/dev/null
+if [ $? == "1" ]; then
+        dialog --msgbox "Can't store metadata" 5 35
+        exit 1
+fi
+
+gmirror load &>/dev/null
+if [ $? == "1" ]; then
+        gmirror load &>/dev/null
+	#dialog --msgbox "Can't load a software raid" 5 45
+fi
+
+#for array in /dev/mirror/*; do
+#	set -- "$array"
+#	IFS="/"; declare -a mirror=($*)
+#	gmirror stop ${mirror[3]} 
+#done
+
+gmirror insert gm${gm_number[@]} ${hdds_to_delete_array[1]} &>/dev/null
+if [ $? == "1" ]; then
+        dialog --msgbox "Can't create a software raid" 5 35
+        exit 1
+fi
+}
+
+
+# function which returns the netmask
+function get_netmask() {
+  local intf="$1"
+  local hex_netmask=""
+  local dec_netmask=""
+
+  hex_netmask="$(ifconfig $intf | grep netmask | sed -e "s/.*netmask \(0x.*\)broadcast.*/\1/" | cut -d "x" -f2)"
+  
+  for start in 1 3 5 7; do
+    end="$(($start+1))"
+    part="$(echo $hex_netmask | cut -c ${start}-${end} | tr '[:lower:]' '[:upper:]')"
+    dec_netmask="${dec_netmask}$(echo "ibase=16; $part" | bc)"
+    if [ $start -ne 7 ]; then
+      dec_netmask="${dec_netmask}."
+    fi
+  done
+
+  [ -n "$dec_netmask" ] && echo "$dec_netmask"
+}
+
+function get_ip() {
+  [ -z "$1" ] && return
+
+  local interface="$1"
+  local ip_addr="$(/sbin/ifconfig $interface | grep "inet " | awk '{print $2}')"
+
+  echo "$ip_addr"
+}
+
+function get_gateway() {
+
+  local gateway="$(/usr/bin/netstat -rn | /usr/bin/grep "^default" | /usr/bin/awk '{print $2}')"
+  echo "$gateway"
+}
+
+# Not used
+function get_network_address() {
+  [ -z "$1" ] && return
+
+  local interface="$1"
+  local ip="$(get_ip $interface)"
+  local hex_netmask="$(ifconfig $interface | grep "netmask" | sed -e "s/.*netmask \(0x.*\)broadcast.*/\1/" | cut -d "x" -f2)"
+
+  for part in 1 2 3 4; do
+    ip_part="$(echo $ip | cut -d "." -f $part)"
+    ip_part_hex="$(echo "obase=16; $ip_part" | bc)"
+
+    start="$(($part * 2 - 1))"
+    end="$(($start + 1))"
+    
+    netmask_part_hex="$(echo $hex_netmask | cut -c ${start}-${end})"
+    number_result="${number_result}$((0x${ip_part_hex} & 0x${netmask_part_hex}))"
+    if [ $part -ne 4 ]; then
+      number_result="${number_result}."
+    fi
+  done
+
+  echo "$number_result"
+}
+    
+tmpfile=`mktemp /tmp/dialog.XXXXXX`
+
+# die Liste mit Festplatten wird erstellt
+
+disks=`ls -1 /dev/ad* /dev/da* /dev/twed* /dev/aacd* /dev/mfid* /dev/amrd* 2>/dev/null | grep -E '[a-z]{2}[0-9]+$'`
+a=(`for disk in $disks; do echo $disk \`echo $disk | grep -oE '[0-9]+$'\`; done | sort -n -k 2 | cut -f1 -d' '`)
+
+#hdd_size=(`gpart show | grep '=>' | awk '{print $6}' | sed 's/[()]//g'`)
+n=0
+for item in ${a[@]}; do
+	menuitems="$menuitems $n $item off"
+	#menuitems="$menuitems $n $item---${hdd_size[$n]} off"
+	let n+=1
+done
+
+disk_sum=${#hdds[@]}
+
+if [ $disk_sum -gt 3 ]; then
+	dialog --checklist "Please select one or more hard drives:\n\
+	for RAID 1 (Mirror)  please select 2 hard drives\n\
+	for RAID Z (like Raid 5) please select 3 hard drives\n\
+	for RAID Z2 (like Raid 6) please select 4 hard drives" 15 60 5 \
+        	$menuitems \
+        	2>$tmpfile
+	if [ $? == "1" ]; then
+        	echo cancelled
+        	exit 1
+	fi
+
+else 
+	dialog --checklist "Please select one or more hard drives:\n\
+	for RAID 1 (Mirror) please select 2 hard drives\n\
+	for RAID Z (like Raid 5) please select 3 hard drives" 15 60 5 \
+		$menuitems \
+		2>$tmpfile
+	if [ $? == "1" ]; then
+		echo cancelled
+		exit 1
+	fi
+fi
+harddrives=`cat $tmpfile`
+
+hdds=(`for i in $harddrives; do echo $i | sed 's/"//g'; done`)
+
+if [ -z "$harddrives" ]; then
+	dialog --msgbox "Please select at least one hard drive" 5 45
+	echo "cancelled"
+	exit 1
+fi
+
+# Standardmaessig wird die Festplatte mit UFS partitioniert,
+# nur bei FreeBSD 8.2 x64 kann man ZFS auswaehlen
+# FreeBSD 7.4 enthält keinen Patch uer das "re" autoneg problem --> daher kein Support
+
+filesystem="2"
+
+# /nfs/mfsbsd/8.2-amd64-zfs.tar.xz
+
+dialog --menu "Please select the size of your swap partition:" 11 55 5\
+	1 "4 GB (default)" \
+	2 "8 GB" \
+	3 "16 GB" \
+	4 "manual input" \
+	2>$tmpfile
+if [ $? == "1" ]; then
+       	echo cancelled
+       	exit 1
+fi
+swap=`cat $tmpfile`	
+if [ $swap == "4" ]; then
+	dialog --inputbox "Please enter the size of your swap:\n\
+for example: 1G for 1 Gigabyte, 2G for 2 Gigabytes" 10 60 1G 2>$tmpfile	
+	
+	if [ $? == "1" ]; then
+		echo cancelled
+		exit 1
+	fi
+swap=`cat $tmpfile`
+fi
+
+if [ $swap == "1" ]; then
+	swap="4G"
+fi
+if [ $swap == "2" ]; then
+	swap="8G"
+fi
+if [ $swap == "3" ]; then
+	swap="16G"
+fi
+
+
+valid=0
+while [ $valid == "0" ]; do
+	dialog --inputbox "Please enter a hostname:" 10 40 ns12345.canonical-domain.com 2>$tmpfile
+	if [ $? == "1" ]; then
+		echo cancelled
+		exit 1
+	fi
+	hostname=`cat $tmpfile`
+        regexp="^[a-zA-Z0-9\.-]+$"
+        if ! echo $hostname | grep -E $regexp >/dev/null; then
+        	dialog --msgbox "Invalid hostname. Please try again." 5 45
+	else
+                valid=1
+        fi
+done
+
+i=0
+for anzahl in ${hdds[@]}; do
+	hdds_to_delete="$hdds_to_delete ${a[${hdds[i]}]}\n"
+	hdds_to_delete_array[i]="${a[${hdds[i]}]}"
+	let i+=1
+done
+
+# default is raidz
+kind_of_raidz=1
+
+# check if we want raidz2
+if [ ${#hdds_to_delete_array[@]} -ge 4 ] && [ "$filesystem" == "2" ]; then
+  dialog --menu "Please choose raidz or raidz2:" 11 55 5\
+          1 "raidz" \
+          2 "raidz2" \
+          2>$tmpfile
+
+  if [ $? == "1" ]; then
+    echo "cancelled"
+    exit 1
+  fi
+
+  kind_of_raidz="$(cat $tmpfile)"
+fi
+
+tank_name="hpool"
+
+# Default to 4kb sectors (2^12) for newer drives.  XXX Does not work yet (8.2
+# doesn't support it.)
+ASHIFT=12
+
+#dialog --yesno "Do your drives have 4k sectors? \
+#Choose yes if you're unsure." 8 75 2>$tmpfile
+
+#if [ $? == "1" ]; then
+#        # Fall back to ashift 512b sectors sizes (2^9)
+#        ASHIFT=9
+#fi
+
+dialog --yesno "All your data on following harddrive(s) will be deleted. \
+Do you agree?\n\n$hdds_to_delete" 10 75 2>$tmpfile
+
+if [ $? == "1" ]; then
+        echo cancelled
+        exit 1
+fi
+
+# Hier beginnt die Installation und Konfiguration anhand gesammelter Daten
+
+# Installation mit ZFS
+if [ "$filesystem" == "2" ]; then
+
+	hybrid_header
+
+	if [ ${#hdds_to_delete_array[@]} == "1" ]; then
+		delete_selected_hdd_ufs
+	fi
+	if [ ${#hdds_to_delete_array[@]} -ge "2" ]; then
+		delete_all_hdd_ufs
+	fi
+	
+	echo "Deleting selected harddrive(s)... DONE"
+
+	echo -n "Creating a file system and extracting the image... "	
+
+	# Mount the cdrom if you can
+	mount_cd9660 /dev/acd0 /cdrom &>/dev/null
+	mount_cd9660 /dev/cd0 /cdrom &>/dev/null # 9.1 version...
+
+	dialog --menu "Please select your install medium:" 11 55 5\
+			1 "CDROM (/cdrom/8.2-RELEASE-amd64.tar.xz)" \
+			2 "NFS (/nfs/mfsbsd/8.2-amd64-zfs.tar.xz; Hetzner)" \
+			3 "manual input" \
+		2>$tmpfile
+	if [ $? == "1" ]; then
+			echo cancelled
+			exit 1
+	fi
+	image_selected=`cat $tmpfile`	
+	if [ $image_selected == "3" ]; then
+			dialog --inputbox "Please enter the path of the FreeBSD image (.xz):\n\
+" 10 60 / 2>$tmpfile	
+		
+		if [ $? == "1" ]; then
+			echo cancelled
+			exit 1
+		fi
+	image_selected=`cat $tmpfile`
+	fi
+
+	if [ $image_selected == "1" ]; then
+		image_selected="/cdrom/8.2-RELEASE-amd64.tar.xz"
+	fi
+	if [ $image_selected == "2" ]; then
+		image_selected="/nfs/mfsbsd/8.2-amd64-zfs.tar.xz"
+	fi
+
+
+	dialog --menu "Please select the size of your initial ZFS pool\
+ (useful if bootstrapping from a small partition on SSD, \
+e.g. OVH Hybrid in vKVM, where SATA disks not visible):" 20 55 6\
+			1 "All available space" \
+			2 "10G" \
+			3 "manual input" \
+		2>$tmpfile
+	if [ $? == "1" ]; then
+			echo cancelled
+			exit 1
+	fi
+	zpool_size=`cat $tmpfile`	
+	
+	if [ "$zpool_size" == "3" ]; then
+			dialog --inputbox "Please enter the initial size of your ZFS pool (e.g. 10G):\n\
+" 10 60 / 2>$tmpfile
+		
+		if [ $? == "1" ]; then
+			echo cancelled
+			exit 1
+		fi
+	zpool_size=`cat $tmpfile`
+	fi
+	if [ "$zpool_size" == "1" ]; then
+		zpool_size=""
+	fi
+	if [ "$zpool_size" == "2" ]; then
+		zpool_size="10G"
+	fi
+
+	if [ -n "$zpool_size" ]; then
+		zpool_size_suffix=" -z $zpool_size"
+	else
+		zpool_size_suffix=""
+	fi
+
+
+	#kein Software Raid
+	if [ ${#hdds_to_delete_array[@]} == "1" ]; then
+		echo "./zfsinstall -a $ASHIFT -V $ZFS_VERSION -d ${hdds_to_delete_array[0]} -t $image_selected -p $tank_name -s $swap $zpool_size_suffix"
+		./zfsinstall -a $ASHIFT -V $ZFS_VERSION -d ${hdds_to_delete_array[0]} -t $image_selected -p $tank_name -s $swap $zpool_size_suffix
+	fi
+
+	# Software Raid 1 mit 2 Platten
+	if [ ${#hdds_to_delete_array[@]} == "2" ]; then
+		echo "./zfsinstall -a $ASHIFT -V $ZFS_VERSION -d ${hdds_to_delete_array[0]} -d ${hdds_to_delete_array[1]} -p $tank_name -t $image_selected -s $swap $zpool_size_suffix"
+		./zfsinstall -a $ASHIFT -V $ZFS_VERSION -d ${hdds_to_delete_array[0]} -d ${hdds_to_delete_array[1]} -p $tank_name -t $image_selected -s $swap $zpool_size_suffix
+	fi
+
+	# Software Raid Z mit n Platten
+	if [ ${#hdds_to_delete_array[@]} -ge "3" ]; then
+		all_harddrives=""
+		i=0
+		for disk in ${hdds_to_delete_array[@]}; do
+			all_harddrives="$all_harddrives -d ${hdds_to_delete_array[$i]}"
+			#all_harddrives="$all_harddrives -d ${a[${hdds[$disk]}]}"
+			let i+=1	
+		done
+                #if [ -n "$tank_name" ]; then
+                #  option_name_pool="-p $tank_name"
+                #else
+                #  option_name_pool=" "
+                #fi
+
+                if [ $kind_of_raidz -eq 1 ]; then
+		  echo "./zfsinstall -a $ASHIFT -V $ZFS_VERSION $all_harddrives -p $tank_name -r raidz -t $image_selected -s $swap $zpool_size_suffix"
+		  ./zfsinstall -a $ASHIFT -V $ZFS_VERSION $all_harddrives -p $tank_name -r raidz -t $image_selected -s $swap $zpool_size_suffix
+                elif [ $kind_of_raidz -eq 2 ]; then
+		  echo "./zfsinstall -a $ASHIFT -V $ZFS_VERSION $all_harddrives -p $tank_name -r raidz2 -t $image_selected -s $swap $zpool_size_suffix"
+		  ./zfsinstall -a $ASHIFT -V $ZFS_VERSION $all_harddrives -p $tank_name -r raidz2 -t $image_selected -s $swap $zpool_size_suffix
+                else
+                  echo "wrong kind of raidz choosed"
+                  exit 1
+                fi
+	fi
+	echo "DONE"
+fi
+
+echo -n "Configuring rc.conf... "
+cat > /mnt/etc/rc.conf << EOF
+hostname="$hostname"
+sshd_enable="YES"
+sendmail_enable="NONE"
+zfs_enable="YES"
+ntpd_enable="YES"
+EOF
+echo "DONE"
+
+echo -n "Configuring loader.conf... "
+cat >> /mnt/boot/loader.conf << EOF
+geom_mirror_load="YES"
+vfs.zfs.zio.use_uma="0"
+EOF
+echo "DONE"
+
+echo -n "Configuring HC deployment system access..."
+mkdir -p /mnt/root/.ssh
+
+echo ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCV7gOhxbvmvXcuqNS6LvoiGAEoOzltpb/inEn40EmJETWQaL3CXIYWcgzj5C2GcWXppryf6rEM1u2u1QjzAOrARj/EafFQQlMHGWR4IL0sNU0SFQUez5NgFwqhWVMCh3K6l2D5e1J4gDtIVu+B3t0F+qj+T9FEjpfm0noNL6Clcnu7CBySppFiADH0WlfNwzADRTSnP3uJizOGq4/+EEk6DKV3b1IbETeBk0EyxSPyH9fv7+VXjtuGht1zMl9sDIMngiItBlOudWHRgo9D2I63pNqj7s3CIa1UHRM60O0U2MtuZRnDJlOPAWg2a7GoOIBduxrfeLHkqPxA0GydNvkD luke@pow > /mnt/root/.ssh/authorized_keys
+
+sed -i backup 's/#PermitRootLogin no/PermitRootLogin yes/' /mnt/etc/ssh/sshd_config
+sed -i backup 's/#Port 22/Port 2222/' /mnt/etc/ssh/sshd_config
+
+# Allow them to set up a root password, so they can log in to fix the ZFS pool after.
+while [ -z "$password" ]; do
+        dialog --inputbox "Please enter a root password:" 10 40 2>$tmpfile
+
+        if [ $? == "1" ]; then
+                echo cancelled
+                exit 1
+        fi
+        password_temp=`cat $tmpfile`
+        
+	dialog --inputbox "Please enter your root password again:" 10 50 2>$tmpfile
+	password=`cat $tmpfile`
+	
+	if [ -z "$password" ]; then
+		dialog --msgbox "The password can't be empty!" 5 35
+	fi
+	
+	if [ "$password_temp" != "$password" ]; then
+		dialog --msgbox "The password doesn't match!" 5 35
+		password=""
+	fi
+done
+
+if [ $? == "1" ]; then
+        echo cancelled
+        exit 1 
+fi
+echo $password | pw -V /mnt/etc usermod root -h 0
+
+# now configure network interfaces
+public_interface=""
+for interface in `ifconfig -l`; do
+        if [ "$interface" == "lo0" ]; then
+                continue
+        fi
+
+        if [ "$interface" == "plip0" ]; then
+				# Who the fuck uses parallel ports any more.
+                continue
+        fi
+
+        if [ -z "$(/sbin/ifconfig $interface | /usr/bin/grep -E "media: .*autoselect.*")" ]; then
+          media_conf="media 100BaseTX mediaopt full-duplex,flag0"
+        fi
+
+        ip_addr="$(get_ip $interface)"
+			dialog --inputbox "Please enter your primary public IP addr for interface $interface:\n\
+		" 10 70 $ip_addr 2>$tmpfile	
+		
+		if [ $? == "1" ]; then
+			echo cancelled
+			exit 1
+		fi
+		ip_addr=`cat $tmpfile`
+        
+        if [ -z "$ip_addr" ]; then
+          continue
+        else
+          [ -z "$public_interface" ] && public_interface="$interface"
+        fi
+        netmask="$(get_netmask $interface)"
+		dialog --inputbox "Please enter your netmask:\n\
+		" 10 70 $netmask 2>$tmpfile	
+		
+		if [ $? == "1" ]; then
+			echo cancelled
+			exit 1
+		fi
+		netmask=`cat $tmpfile`
+
+        if [ -z "$gateway" ]; then
+            gateway="$(get_gateway)"
+
+            dialog --inputbox "Please enter your gateway IP addr:\n\
+            " 10 70 $gateway 2>$tmpfile	
+            
+            if [ $? == "1" ]; then
+                echo cancelled
+                exit 1
+            fi
+            gateway=`cat $tmpfile`
+        fi
+
+		# Permit the user to change the network card name
+		dialog --inputbox "Change the interface name if necessary (em0 on OVH / igb0 on EG 2013 models):\n\
+		" 10 70 $interface 2>$tmpfile	
+		
+		if [ $? == "1" ]; then
+			echo cancelled
+			exit 1
+		fi
+		interface=`cat $tmpfile`
+
+        if [ -n "$media_conf" ]; then
+
+          cat >> /mnt/etc/rc.conf << EOF
+ifconfig_$interface="inet $ip_addr netmask $netmask $media_conf"
+defaultrouter="$gateway"
+EOF
+
+        else
+          cat >> /mnt/etc/rc.conf << EOF
+ifconfig_$interface="inet $ip_addr netmask $netmask"
+defaultrouter="$gateway"
+EOF
+        fi
+
+        if [ "$interface" == "igb0" ]; then
+            echo "If you are installing FreeBSD 8.2 on EG 2013 hardware please"
+            echo "run the following commands to ensure a working network interface:"
+            echo
+            echo "cd /mnt/boot"
+            echo "mv kernel kernel.old"
+            echo "fetch http://hybridcluster.net/kernel-8.2-patched-igb.tar"
+            echo "tar xfv kernel-8.2-patched-igb.tar"
+            sleep 10
+        fi
+         
+done
+
+echo -n "Configuring resolv.conf... "
+echo "nameserver 8.8.8.8" > /mnt/etc/resolv.conf
+echo "nameserver 8.8.4.4" >> /mnt/etc/resolv.conf
+echo "DONE"
+
+echo ""
+echo "Congratulations!  The configuration has been completed successfully."
+echo "You can now use 'reboot' to boot your newly installed Hybrid Cluster node."
+echo "And log in to https://my.hybrid-cluster.com/ to deploy it."
+echo ""
+echo "Your IP is: $ip_addr - write this down, you will need it when you deploy."
+echo ""
+
