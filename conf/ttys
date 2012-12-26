@@ -2,7 +2,7 @@
 #
 console	none				unknown	off secure
 #
-ttyv0	"/usr/bin/bootstrap.sh"		cons25	on  secure
+ttyv0	"/bin/hc-install"		cons25	on  secure
 # Virtual terminals
 ttyv1	"/usr/libexec/getty Pc"		cons25	on  secure
 ttyv2	"/usr/libexec/getty Pc"		cons25	off secure
