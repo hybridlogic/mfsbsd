@@ -6,7 +6,15 @@
 # Version 2.0
 
 HybridCluster (after manual buildworld and buildkernel):
+
 make iso CUSTOM=1 KERNCONF=DTRACE
+
+
+(TODO - generate a release ISO ourselves?  Somehow overwrite the world and kernel in here?)
+sudo mdconfig -a -t vnode -f FreeBSD-9.1-RELEASE-amd64-bootonly.iso
+sudo mount_cd9660 -o ro /dev/md0 ./FreeBSD-9.1-RELEASE-amd64-bootonly
+make iso BASE=./source-iso/FreeBSD-9.1-RELEASE-amd64-bootonly RELEASE=9.1-RELEASE ARCH=amd64 CUSTOM=1 KERNCONF=DTRACE
+
 
 BUILDING INSTRUCTIONS:
  1. Configuration
