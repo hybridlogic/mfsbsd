@@ -5,6 +5,9 @@
 #
 # Version 2.0
 
+HybridCluster (after manual buildworld and buildkernel):
+make iso CUSTOM=1 KERNCONF=DTRACE
+
 BUILDING INSTRUCTIONS:
  1. Configuration
     Read hints in the sample configuration files in the conf/ directory, copy
@@ -34,14 +37,6 @@ BUILDING INSTRUCTIONS:
 
     You may create three types of output: disc image for use by dd(1), 
     ISO image or a simple .tar.gz file
-
----
-
-    HybridCluster:
-
-	make iso CUSTOM=1 BUILDWORLD=1 BUILDKERNEL=1 KERNCONF=DTRACE
-
----
 
     Examples:
 
