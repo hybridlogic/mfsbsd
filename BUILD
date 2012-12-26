@@ -35,6 +35,14 @@ BUILDING INSTRUCTIONS:
     You may create three types of output: disc image for use by dd(1), 
     ISO image or a simple .tar.gz file
 
+---
+
+    HybridCluster:
+
+	make iso CUSTOM=1 BUILDWORLD=1 BUILDKERNEL=1 KERNCONF=DTRACE
+
+---
+
     Examples:
 
     a) disc image
