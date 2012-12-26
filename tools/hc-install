@@ -330,7 +330,7 @@ filesystem="2"
 # /nfs/mfsbsd/8.2-amd64-zfs.tar.xz
 
 dialog --menu "Please select the size of your swap partition:" 11 55 5\
-	1 "4 GB (default)" \
+	1 "64 GB (default)" \
 	2 "8 GB" \
 	3 "16 GB" \
 	4 "manual input" \
@@ -352,7 +352,7 @@ swap=`cat $tmpfile`
 fi
 
 if [ $swap == "1" ]; then
-	swap="4G"
+	swap="64G"
 fi
 if [ $swap == "2" ]; then
 	swap="8G"
