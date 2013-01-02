@@ -1,0 +1,9 @@
+#!/bin/sh
+kbdcontrol -d >/dev/null 2>&1
+/usr/libexec/getty autologin ttyv1 &
+trap true SIGINT
+TERM=xterm
+export TERM
+while true; do
+/root/bin/hc-install
+done
