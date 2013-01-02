@@ -346,10 +346,11 @@ ${WRKDIR}/.config_done:
 		${INSTALL} ${CFGDIR}/authorized_keys ${_DESTDIR}/root/.ssh/; \
 	fi
 	@${MKDIR} ${_DESTDIR}/root/bin
-	@${INSTALL} ${TOOLSDIR}/hc-install ${_DESTDIR}/root/bin
-	@${INSTALL} ${TOOLSDIR}/hc-wipedisks ${_DESTDIR}/root/bin
-	@${INSTALL} ${TOOLSDIR}/zfsinstall ${_DESTDIR}/root/bin
-	@${INSTALL} ${TOOLSDIR}/destroygeom ${_DESTDIR}/root/bin
+	@${INSTALL} -m 0555 ${TOOLSDIR}/hc-install ${_DESTDIR}/root/bin
+	@${INSTALL} -m 0555 ${TOOLSDIR}/hc-wipedisks ${_DESTDIR}/root/bin
+	@${INSTALL} -m 0555 ${TOOLSDIR}/zfsinstall ${_DESTDIR}/root/bin
+	@${INSTALL} -m 0555 ${TOOLSDIR}/destroygeom ${_DESTDIR}/root/bin
+	@${INSTALL} -m 0555 ${TOOLSDIR}/rc.local ${_DESTDIR}/etc
 	@for SCRIPT in ${SCRIPTS}; do \
 		${INSTALL} -m 0555 ${SCRIPTSDIR}/$${SCRIPT} ${_DESTDIR}/etc/rc.d/; \
 	done

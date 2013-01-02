@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/local/bin/bash
 
 # TODO: Change this to 28 if we start installing onto FreeBSD 8.3 or later.
 ZFS_VERSION=15

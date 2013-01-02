@@ -68,3 +68,4 @@ BUILDING INSTRUCTIONS:
 
     e) special edition (with FreeBSD distribution):
 	make iso BASE=/cdrom/8.3-RELEASE RELEASE=8.3-RELEASE ARCH=amd64
+	make iso CUSTOM=1 SE=1 ROOTHACK_FILE=/usr/home/hybrid/mfsbsd/tools/roothack/roothack KERNCONF=DTRACE
