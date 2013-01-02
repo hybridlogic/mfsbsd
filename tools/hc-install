@@ -633,20 +633,21 @@ for interface in `ifconfig -l`; do
           media_conf="media 100BaseTX mediaopt full-duplex,flag0"
         fi
 
-        ip_addr="$(get_ip $interface)"
+        new_ip_addr="$(get_ip $interface)"
 			dialog --inputbox "Please enter your primary public IP addr for interface $interface:\n\
-		" 10 70 $ip_addr 2>$tmpfile	
+		" 10 70 $new_ip_addr 2>$tmpfile	
 		
 		if [ $? == "1" ]; then
 			echo cancelled
 			exit 1
 		fi
-		ip_addr=`cat $tmpfile`
+		new_ip_addr=`cat $tmpfile`
         
-        if [ -z "$ip_addr" ]; then
+        if [ -z "$new_ip_addr" ]; then
           continue
         else
           [ -z "$public_interface" ] && public_interface="$interface"
+          ip_addr=$new_ip_addr
         fi
         netmask="$(get_netmask $interface)"
 		dialog --inputbox "Please enter your netmask:\n\
@@ -695,16 +696,16 @@ defaultrouter="$gateway"
 EOF
         fi
 
-        if [ "$interface" == "igb0" ]; then
-            echo "If you are installing FreeBSD 8.2 on EG 2013 hardware please"
-            echo "run the following commands to ensure a working network interface:"
-            echo
-            echo "cd /mnt/boot"
-            echo "mv kernel kernel.old"
-            echo "fetch http://hybridcluster.net/kernel-8.2-patched-igb.tar"
-            echo "tar xfv kernel-8.2-patched-igb.tar"
-            sleep 10
-        fi
+        #if [ "$interface" == "igb0" ]; then
+        #    echo "If you are installing FreeBSD 8.2 on EG 2013 hardware please"
+        #    echo "run the following commands to ensure a working network interface:"
+        #    echo
+        #    echo "cd /mnt/boot"
+        #    echo "mv kernel kernel.old"
+        #    echo "fetch http://hybridcluster.net/kernel-8.2-patched-igb.tar"
+        #    echo "tar xfv kernel-8.2-patched-igb.tar"
+        #    sleep 10
+        #fi
          
 done
 
