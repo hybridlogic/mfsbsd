@@ -448,6 +448,7 @@ if [ "$filesystem" == "2" ]; then
 	mount_cd9660 /dev/cd0 /cdrom &>/dev/null # 9.1 version...
 
     latest_image='9.1-244958-amd64.tar.xz'
+    tmp_dir='/root/tmpfs'
 	dialog --menu "Please select your install medium:" 11 55 5\
 			1 "CDROM (/cdrom/8.2-RELEASE-amd64.tar.xz)" \
 			2 "NFS (/nfs/mfsbsd/8.2-amd64-zfs.tar.xz; Hetzner)" \
@@ -477,8 +478,10 @@ if [ "$filesystem" == "2" ]; then
 		image_selected="/nfs/mfsbsd/8.2-amd64-zfs.tar.xz"
 	fi
 	if [ $image_selected == "3" ]; then
-        fetch -o /tmp/$latest_image ftp://ftp.hybrid-cluster.com/$latest_image
-		image_selected="/tmp/$latest_image"
+        # In case we're in the OVH rescue-pro environment, which has no free space.
+        mkdir $tmp_dir; mount_mfs -o rw -s 256M md $tmp_dir
+        fetch -o $tmp_dir/$latest_image ftp://ftp.hybrid-cluster.com/$latest_image
+		image_selected="$tmp_dir/$latest_image"
 	fi
 
 
