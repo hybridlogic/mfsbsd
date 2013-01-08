@@ -56,7 +56,7 @@ fi
  
 function fstab()
 {
-if [ $filesystem == "1" ]; then
+if [ $filesystem == "2" ]; then
         if [ ${#hdds[@]} == "2" ]; then
                 letter="/dev/mirror/gm${gm_number[@]}"
         fi
@@ -325,7 +325,17 @@ fi
 # nur bei FreeBSD 8.2 x64 kann man ZFS auswaehlen
 # FreeBSD 7.4 enthält keinen Patch uer das "re" autoneg problem --> daher kein Support
 
-filesystem="2"
+dialog --menu "Please select a file system:" 10 60 5 \
+            1 "ZFS (for production)" \
+            2 "UFS (for debug systems with separate zpool)" \
+        2>$tmpfile
+    if [ $? == "1" ]; then
+        echo cancelled
+        exit 1
+fi
+filesystem=`cat $tmpfile`
+
+#filesystem="2"
 
 # /nfs/mfsbsd/8.2-amd64-zfs.tar.xz
 
@@ -389,7 +399,7 @@ done
 kind_of_raidz=1
 
 # check if we want raidz2
-if [ ${#hdds_to_delete_array[@]} -ge 4 ] && [ "$filesystem" == "2" ]; then
+if [ ${#hdds_to_delete_array[@]} -ge 4 ] && [ "$filesystem" == "1" ]; then
   dialog --menu "Please choose raidz or raidz2:" 11 55 5\
           1 "raidz" \
           2 "raidz2" \
@@ -427,8 +437,165 @@ fi
 
 # Hier beginnt die Installation und Konfiguration anhand gesammelter Daten
 
-# Installation mit ZFS
+# Mount the cdrom if you can
+mount_cd9660 /dev/acd0 /cdrom &>/dev/null
+mount_cd9660 /dev/cd0 /cdrom &>/dev/null # 9.1 version...
+
+latest_image='9.1-244958-amd64.tar.xz'
+tmp_dir='/root/tmpfs'
+dialog --menu "Please select your install medium:" 11 55 5\
+        1 "CDROM (/cdrom/9.1-PRERELEASE-amd64.tar.xz)" \
+        2 "NFS (/nfs/mfsbsd/8.2-amd64-zfs.tar.xz; Hetzner)" \
+        3 "FTP (ftp://ftp.hybrid-cluster.com/$latest_image)" \
+        4 "manual input" \
+    2>$tmpfile
+if [ $? == "1" ]; then
+        echo cancelled
+        exit 1
+fi
+image_selected=`cat $tmpfile`	
+if [ $image_selected == "4" ]; then
+        dialog --inputbox "Please enter the path of the FreeBSD image (.xz):\n\
+" 10 60 / 2>$tmpfile	
+    
+    if [ $? == "1" ]; then
+        echo cancelled
+        exit 1
+    fi
+image_selected=`cat $tmpfile`
+fi
+
+if [ $image_selected == "1" ]; then
+    image_selected="/cdrom/9.1-PRERELEASE-amd64.tar.xz"
+fi
+if [ $image_selected == "2" ]; then
+    image_selected="/nfs/mfsbsd/8.2-amd64-zfs.tar.xz"
+fi
+if [ $image_selected == "3" ]; then
+    # In case we're in the OVH rescue-pro environment, which has no free space.
+    mkdir $tmp_dir; mount_mfs -o rw -s 256M md $tmp_dir
+    fetch -o $tmp_dir/$latest_image ftp://ftp.hybrid-cluster.com/$latest_image
+    image_selected="$tmp_dir/$latest_image"
+fi
+
+# Installation mit UFS 
 if [ "$filesystem" == "2" ]; then
+
+    delete_selected_hdd_ufs
+    letter="${hdds_to_delete_array[@]}"	
+	
+	if [ ${#hdds_to_delete_array[@]} == "2" ]; then
+        echo "Warning: refusing to create gmirror, because it's probably not what you want."
+        echo "Try again with just one disk selected."
+        echo "letter=$letter"
+        exit 1
+	fi
+
+#	fdisk -BI $letter &>/dev/null
+
+#	bsdlabel -wB ${letter}s1 &>/dev/null
+
+#cat > /tmp/partitionstabelle << EOF
+#  #        size   offset    fstype   [fsize bsize bps/cpg]
+#  a:         *       2079    4.2BSD        0     0
+#  b:        $swap        *    swap        0     0
+#  c:         *           *    unused        0     0         # "raw" part, don't edit
+#EOF
+
+#	bsdlabel -R ${letter}s1 /tmp/partitionstabelle
+
+/sbin/gpart destroy -F $letter > /dev/null
+
+if ! /sbin/gpart create -s GPT $letter > /dev/null; then
+        echo "error creating gpt"
+        exit 1
+fi
+if ! /sbin/gpart add -b 2048 -t freebsd-boot -s 128 $letter > /dev/null; then
+        echo "error adding boot"
+        exit 1
+fi
+if ! /sbin/gpart add -t freebsd-swap -s ${swap} -l swap ${letter} > /dev/null; then
+        echo "error adding swap"
+        exit 1
+fi
+	
+    dialog --menu "Please select the size of your initial UFS filesystem\
+ (useful when you'll want to create a zpool alongside it):" 20 55 6\
+			1 "All available space" \
+			2 "10G" \
+			3 "manual input" \
+		2>$tmpfile
+	if [ $? == "1" ]; then
+			echo cancelled
+			exit 1
+	fi
+	ufs_size=`cat $tmpfile`	
+	
+	if [ "$ufs_size" == "3" ]; then
+			dialog --inputbox "Please enter the initial size of your UFS partition (e.g. 10G):\n\
+" 10 60 "10G" 2>$tmpfile
+		
+		if [ $? == "1" ]; then
+			echo cancelled
+			exit 1
+		fi
+	ufs_size=`cat $tmpfile`
+	fi
+	if [ "$ufs_size" == "1" ]; then
+		ufs_size=""
+	fi
+	if [ "$ufs_size" == "2" ]; then
+		ufs_size="10G"
+	fi
+
+	if [ -n "$ufs_size" ]; then
+		ufs_size_suffix=" -s $ufs_size"
+	else
+		ufs_size_suffix=""
+	fi
+
+if ! /sbin/gpart add -t freebsd-ufs $ufs_size_suffix -l boot ${letter} >/dev/null; then
+        echo "error adding ufs"
+        exit 1
+fi
+if ! /sbin/gpart bootcode -b /boot/pmbr -p /boot/gptboot -i 1 ${letter} > /dev/null; then
+        echo "error writing bootcode"
+        exit 1
+fi
+
+	hybrid_header
+
+	echo -n "Creating a file system(up to 10 minutes)..."
+
+        #newfs -U  ${letter}s1a &>/dev/null
+        newfs -O2 -U ${letter}p3 &>/dev/null
+ 
+
+        if [ $? == "1" ]; then
+                echo "Can't create a file system"
+                exit 1
+        fi
+        echo "DONE"
+
+        #mount ${letter}s1a /mnt/
+        mount ${letter}p3 /mnt
+
+	if [ $? == "1" ]; then
+        	echo "Can't mount root partition"
+        	exit 1
+	fi
+
+	echo -n "Extract image... "
+	tar xfzvC $image_selected /mnt &>/dev/null
+	echo "DONE"
+
+	fstab
+fi
+
+
+
+# Installation mit ZFS
+if [ "$filesystem" == "1" ]; then
 
 	hybrid_header
 
@@ -442,47 +609,6 @@ if [ "$filesystem" == "2" ]; then
 	echo "Deleting selected harddrive(s)... DONE"
 
 	echo -n "Creating a file system and extracting the image... "	
-
-	# Mount the cdrom if you can
-	mount_cd9660 /dev/acd0 /cdrom &>/dev/null
-	mount_cd9660 /dev/cd0 /cdrom &>/dev/null # 9.1 version...
-
-    latest_image='9.1-244958-amd64.tar.xz'
-    tmp_dir='/root/tmpfs'
-	dialog --menu "Please select your install medium:" 11 55 5\
-			1 "CDROM (/cdrom/8.2-RELEASE-amd64.tar.xz)" \
-			2 "NFS (/nfs/mfsbsd/8.2-amd64-zfs.tar.xz; Hetzner)" \
-			3 "FTP (ftp://ftp.hybrid-cluster.com/$latest_image)" \
-			4 "manual input" \
-		2>$tmpfile
-	if [ $? == "1" ]; then
-			echo cancelled
-			exit 1
-	fi
-	image_selected=`cat $tmpfile`	
-	if [ $image_selected == "4" ]; then
-			dialog --inputbox "Please enter the path of the FreeBSD image (.xz):\n\
-" 10 60 / 2>$tmpfile	
-		
-		if [ $? == "1" ]; then
-			echo cancelled
-			exit 1
-		fi
-	image_selected=`cat $tmpfile`
-	fi
-
-	if [ $image_selected == "1" ]; then
-		image_selected="/cdrom/8.2-RELEASE-amd64.tar.xz"
-	fi
-	if [ $image_selected == "2" ]; then
-		image_selected="/nfs/mfsbsd/8.2-amd64-zfs.tar.xz"
-	fi
-	if [ $image_selected == "3" ]; then
-        # In case we're in the OVH rescue-pro environment, which has no free space.
-        mkdir $tmp_dir; mount_mfs -o rw -s 256M md $tmp_dir
-        fetch -o $tmp_dir/$latest_image ftp://ftp.hybrid-cluster.com/$latest_image
-		image_selected="$tmp_dir/$latest_image"
-	fi
 
 
 	dialog --menu "Please select the size of your initial ZFS pool\
@@ -556,7 +682,7 @@ e.g. OVH Hybrid in vKVM, where SATA disks not visible):" 20 55 6\
 		  echo "./zfsinstall -a $ASHIFT -V $ZFS_VERSION $all_harddrives -p $tank_name -r raidz2 -t $image_selected -s $swap $zpool_size_suffix"
 		  ./zfsinstall -a $ASHIFT -V $ZFS_VERSION $all_harddrives -p $tank_name -r raidz2 -t $image_selected -s $swap $zpool_size_suffix
                 else
-                  echo "wrong kind of raidz choosed"
+                  echo "wrong kind of raidz chosen"
                   exit 1
                 fi
 	fi
