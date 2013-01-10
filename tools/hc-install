@@ -1,5 +1,25 @@
 #!/usr/local/bin/bash
 
+# Start by wiping out all disks.
+echo ""
+echo "WARNING: This script is about to render this server unbootable and"
+echo "destroy all data on it.  If this is not what you intended, hit Ctrl+C in"
+echo "the next 5 seconds"
+echo ""
+sleep 5
+sysctl kern.geom.debugflags=16
+for X in `ls -1 /dev/ad* /dev/da* /dev/twed* /dev/aacd* /dev/mfid* /dev/amrd* 2>/dev/null | grep -E '[a-z]{2}[0-9]+$'`; do
+    echo "Wiping $X..."
+    ./destroygeom -d $X &>/dev/null
+    gmirror clear $X &>/dev/null
+    # Zero out the first 10 meg
+    dd if=/dev/zero of=$X bs=1024 count=10240 &>/dev/null
+    # And the last 10 meg
+    skip=$(echo `diskinfo $X | cut -f 3` / 1024 - 10240 | bc)
+    dd if=/dev/zero of=$X bs=1024 count=10240 seek=$skip &>/dev/null
+done
+echo "Done.  Continuing with the installation..."
+
 # TODO: Change this to 28 if we start installing onto FreeBSD 8.3 or later.
 ZFS_VERSION=15
 
@@ -565,7 +585,7 @@ fi
 
 	hybrid_header
 
-	echo -n "Creating a file system(up to 10 minutes)..."
+	echo -n "Creating a file system (up to 10 minutes)..."
 
         #newfs -U  ${letter}s1a &>/dev/null
         newfs -O2 -U ${letter}p3 &>/dev/null
