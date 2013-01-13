@@ -417,7 +417,7 @@ ${WRKDIR}/.boot_done:
 .for FILE in boot defaults loader loader.help *.rc *.4th
 	@${CP} -rp ${_DESTDIR}/boot/${FILE} ${WRKDIR}/disk/boot
 .endfor
-	@${RM} -rf ${WRKDIR}/disk/boot/kernel/*.ko ${WRKDIR}/disk/boot/kernel/*.symbols
+	#@${RM} -rf ${WRKDIR}/disk/boot/kernel/*.ko ${WRKDIR}/disk/boot/kernel/*.symbols
 .if defined(DEBUG)
 	@test -f ${_BOOTDIR}/kernel/kernel.symbols \
 	&& ${INSTALL} -m 0555 ${_BOOTDIR}/kernel/kernel.symbols ${WRKDIR}/disk/boot/kernel >/dev/null 2>/dev/null || exit 0
@@ -445,7 +445,7 @@ ${WRKDIR}/.boot_done:
 	@${INSTALL} -m 0666 ${_BOOTDIR}/kernel/tmpfs.ko ${_ROOTDIR}/boot/modules
 	@echo " done"
 .endif
-	@${RM} -rf ${_BOOTDIR}/kernel ${_BOOTDIR}/*.symbols
+	#@${RM} -rf ${_BOOTDIR}/kernel ${_BOOTDIR}/*.symbols
 	@${TOUCH} ${WRKDIR}/.boot_done
 	@echo " done"
 
