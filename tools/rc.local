@@ -1,6 +1,12 @@
 #!/bin/sh
 kbdcontrol -d >/dev/null 2>&1
 /usr/libexec/getty autologin ttyv1 &
+/usr/libexec/getty autologin ttyv2 &
+/usr/libexec/getty autologin ttyv3 &
+/usr/libexec/getty autologin ttyv4 &
+/usr/libexec/getty autologin ttyv5 &
+/usr/libexec/getty autologin ttyv6 &
+/usr/libexec/getty autologin ttyv7 &
 trap true SIGINT
 TERM=xterm
 export TERM
