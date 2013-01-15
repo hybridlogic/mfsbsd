@@ -868,3 +868,7 @@ echo ""
 echo "Your IP is: $ip_addr - write this down, you will need it when you deploy."
 echo ""
 
+echo "Remove the media from the external drive, and press any key to reboot..."
+read
+shutdown -r now
+
