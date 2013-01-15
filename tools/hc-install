@@ -3,10 +3,11 @@
 # Start by wiping out all disks.
 echo ""
 echo "WARNING: This script is about to render this server unbootable and"
-echo "destroy all data on it.  If this is not what you intended, hit Ctrl+C in"
-echo "the next 5 seconds"
+echo "destroy all data on it.  Press Enter to do this, otherwise press"
+echo "Alt+F2 to escape to the shell."
 echo ""
-sleep 5
+read
+
 sysctl kern.geom.debugflags=16
 for X in `ls -1 /dev/ad* /dev/da* /dev/twed* /dev/aacd* /dev/mfid* /dev/amrd* 2>/dev/null | grep -E '[a-z]{2}[0-9]+$'`; do
     echo "Wiping $X..."
@@ -868,7 +869,7 @@ echo ""
 echo "Your IP is: $ip_addr - write this down, you will need it when you deploy."
 echo ""
 
-echo "Remove the media from the external drive, and press any key to reboot..."
+echo "Remove the media from the external drive, and press Enter to reboot..."
 read
 shutdown -r now
 
