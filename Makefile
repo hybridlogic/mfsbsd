@@ -245,7 +245,7 @@ ${WRKDIR}/.install_done:
 	@echo " done"
 . if defined(COMPRESS)
 	@echo "Compressing FreeBSD distribution image ..."
-	@${COMPRESS_CMD} -v ${WRKDIR}/dist/${RELEASE}-${TARGET}.tar
+	@${COMPRESS_CMD} -0 -v ${WRKDIR}/dist/${RELEASE}-${TARGET}.tar
 . endif
 . if defined(ROOTHACK)
 	@${RM} -rf ${_DESTDIR}/boot/kernel
@@ -351,10 +351,11 @@ ${WRKDIR}/.config_done:
 	@${INSTALL} -m 0555 ${TOOLSDIR}/zfsinstall ${_DESTDIR}/root/bin
 	@${INSTALL} -m 0555 ${TOOLSDIR}/destroygeom ${_DESTDIR}/root/bin
 	@${INSTALL} -m 0555 ${TOOLSDIR}/rc.local ${_DESTDIR}/etc
+	@${INSTALL} -m 0555 ${TOOLSDIR}/chvt ${_DESTDIR}/usr/bin
 	@for SCRIPT in ${SCRIPTS}; do \
 		${INSTALL} -m 0555 ${SCRIPTSDIR}/$${SCRIPT} ${_DESTDIR}/etc/rc.d/; \
 	done
-	@${SED} -I -E 's/\(ttyv[2-7].*\)on /\1off/g' ${_DESTDIR}/etc/ttys
+#	@${SED} -I -E 's/\(ttyv[2-7].*\)on /\1off/g' ${_DESTDIR}/etc/ttys
 .if !defined(ROOTHACK)
 	@echo "/dev/md0 / ufs rw 0 0" > ${_DESTDIR}/etc/fstab
 	@echo "tmpfs /tmp tmpfs rw,mode=1777 0 0" >> ${_DESTDIR}/etc/fstab
@@ -381,13 +382,13 @@ ${WRKDIR}/.compress-usr_done:
 .if !defined(ROOTHACK)
 	@echo -n "Compressing usr ..."
 	@${TAR} -c -C ${_DESTDIR} -f - usr | \
-	${COMPRESS_CMD} -v -c > ${_DESTDIR}/.usr.tar${SUFX} && \
+	${COMPRESS_CMD} -0 -v -c > ${_DESTDIR}/.usr.tar${SUFX} && \
 	${RM} -rf ${_DESTDIR}/usr && \
 	${MKDIR} ${_DESTDIR}/usr
 .else
 	@echo -n "Compressing root ..."
 	@${TAR} -c -C ${_ROOTDIR} -f - rw | \
-	${COMPRESS_CMD} -v -c > ${_ROOTDIR}/root.txz
+	${COMPRESS_CMD} -0 -v -c > ${_ROOTDIR}/root.txz
 	${RM} -rf ${_DESTDIR} && ${MKDIR} ${_DESTDIR}
 .endif
 	@${TOUCH} ${WRKDIR}/.compress-usr_done
