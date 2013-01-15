@@ -351,6 +351,7 @@ ${WRKDIR}/.config_done:
 	@${INSTALL} -m 0555 ${TOOLSDIR}/zfsinstall ${_DESTDIR}/root/bin
 	@${INSTALL} -m 0555 ${TOOLSDIR}/destroygeom ${_DESTDIR}/root/bin
 	@${INSTALL} -m 0555 ${TOOLSDIR}/rc.local ${_DESTDIR}/etc
+	@${INSTALL} -m 0555 ${TOOLSDIR}/chvt ${_DESTDIR}/usr/bin
 	@for SCRIPT in ${SCRIPTS}; do \
 		${INSTALL} -m 0555 ${SCRIPTSDIR}/$${SCRIPT} ${_DESTDIR}/etc/rc.d/; \
 	done
