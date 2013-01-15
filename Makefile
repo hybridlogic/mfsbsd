@@ -245,7 +245,7 @@ ${WRKDIR}/.install_done:
 	@echo " done"
 . if defined(COMPRESS)
 	@echo "Compressing FreeBSD distribution image ..."
-	@${COMPRESS_CMD} -v ${WRKDIR}/dist/${RELEASE}-${TARGET}.tar
+	@${COMPRESS_CMD} -0 -v ${WRKDIR}/dist/${RELEASE}-${TARGET}.tar
 . endif
 . if defined(ROOTHACK)
 	@${RM} -rf ${_DESTDIR}/boot/kernel
@@ -381,13 +381,13 @@ ${WRKDIR}/.compress-usr_done:
 .if !defined(ROOTHACK)
 	@echo -n "Compressing usr ..."
 	@${TAR} -c -C ${_DESTDIR} -f - usr | \
-	${COMPRESS_CMD} -v -c > ${_DESTDIR}/.usr.tar${SUFX} && \
+	${COMPRESS_CMD} -0 -v -c > ${_DESTDIR}/.usr.tar${SUFX} && \
 	${RM} -rf ${_DESTDIR}/usr && \
 	${MKDIR} ${_DESTDIR}/usr
 .else
 	@echo -n "Compressing root ..."
 	@${TAR} -c -C ${_ROOTDIR} -f - rw | \
-	${COMPRESS_CMD} -v -c > ${_ROOTDIR}/root.txz
+	${COMPRESS_CMD} -0 -v -c > ${_ROOTDIR}/root.txz
 	${RM} -rf ${_DESTDIR} && ${MKDIR} ${_DESTDIR}
 .endif
 	@${TOUCH} ${WRKDIR}/.compress-usr_done
