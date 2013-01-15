@@ -1,5 +1,10 @@
 #!/usr/local/bin/bash
 
+# Get to the place where the zfsinstall script, etc lives.
+if [ -d "/root/bin" ]; then
+    cd /root/bin;
+fi
+
 # Start by wiping out all disks.
 echo ""
 echo "WARNING: This script is about to render this server unbootable and"
@@ -671,14 +676,14 @@ e.g. OVH Hybrid in vKVM, where SATA disks not visible):" 20 55 6\
 
 	#kein Software Raid
 	if [ ${#hdds_to_delete_array[@]} == "1" ]; then
-		echo "./zfsinstall -a $ASHIFT -V $ZFS_VERSION -d ${hdds_to_delete_array[0]} -t $image_selected -p $tank_name -s $swap $zpool_size_suffix"
-		./zfsinstall -a $ASHIFT -V $ZFS_VERSION -d ${hdds_to_delete_array[0]} -t $image_selected -p $tank_name -s $swap $zpool_size_suffix
+		echo "./zfsinstall -V $ZFS_VERSION -d ${hdds_to_delete_array[0]} -t $image_selected -p $tank_name -s $swap $zpool_size_suffix"
+		./zfsinstall -V $ZFS_VERSION -d ${hdds_to_delete_array[0]} -t $image_selected -p $tank_name -s $swap $zpool_size_suffix
 	fi
 
 	# Software Raid 1 mit 2 Platten
 	if [ ${#hdds_to_delete_array[@]} == "2" ]; then
-		echo "./zfsinstall -a $ASHIFT -V $ZFS_VERSION -d ${hdds_to_delete_array[0]} -d ${hdds_to_delete_array[1]} -p $tank_name -t $image_selected -s $swap $zpool_size_suffix"
-		./zfsinstall -a $ASHIFT -V $ZFS_VERSION -d ${hdds_to_delete_array[0]} -d ${hdds_to_delete_array[1]} -p $tank_name -t $image_selected -s $swap $zpool_size_suffix
+		echo "./zfsinstall -V $ZFS_VERSION -d ${hdds_to_delete_array[0]} -d ${hdds_to_delete_array[1]} -p $tank_name -t $image_selected -s $swap $zpool_size_suffix"
+		./zfsinstall -V $ZFS_VERSION -d ${hdds_to_delete_array[0]} -d ${hdds_to_delete_array[1]} -p $tank_name -t $image_selected -s $swap $zpool_size_suffix
 	fi
 
 	# Software Raid Z mit n Platten
@@ -697,11 +702,11 @@ e.g. OVH Hybrid in vKVM, where SATA disks not visible):" 20 55 6\
                 #fi
 
                 if [ $kind_of_raidz -eq 1 ]; then
-		  echo "./zfsinstall -a $ASHIFT -V $ZFS_VERSION $all_harddrives -p $tank_name -r raidz -t $image_selected -s $swap $zpool_size_suffix"
-		  ./zfsinstall -a $ASHIFT -V $ZFS_VERSION $all_harddrives -p $tank_name -r raidz -t $image_selected -s $swap $zpool_size_suffix
+		  echo "./zfsinstall -V $ZFS_VERSION $all_harddrives -p $tank_name -r raidz -t $image_selected -s $swap $zpool_size_suffix"
+		  ./zfsinstall -V $ZFS_VERSION $all_harddrives -p $tank_name -r raidz -t $image_selected -s $swap $zpool_size_suffix
                 elif [ $kind_of_raidz -eq 2 ]; then
-		  echo "./zfsinstall -a $ASHIFT -V $ZFS_VERSION $all_harddrives -p $tank_name -r raidz2 -t $image_selected -s $swap $zpool_size_suffix"
-		  ./zfsinstall -a $ASHIFT -V $ZFS_VERSION $all_harddrives -p $tank_name -r raidz2 -t $image_selected -s $swap $zpool_size_suffix
+		  echo "./zfsinstall -V $ZFS_VERSION $all_harddrives -p $tank_name -r raidz2 -t $image_selected -s $swap $zpool_size_suffix"
+		  ./zfsinstall -V $ZFS_VERSION $all_harddrives -p $tank_name -r raidz2 -t $image_selected -s $swap $zpool_size_suffix
                 else
                   echo "wrong kind of raidz chosen"
                   exit 1
