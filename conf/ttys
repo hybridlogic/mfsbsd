@@ -7,10 +7,10 @@ ttyv0	"/usr/libexec/getty Pc"		cons25	on  secure
 ttyv1	"/usr/libexec/getty Pc"		cons25	on  secure
 ttyv2	"/usr/libexec/getty Pc"		cons25	on  secure
 ttyv3	"/usr/libexec/getty Pc"		cons25	on  secure
-ttyv4	"/usr/libexec/getty Pc"		cons25	off secure
-ttyv5	"/usr/libexec/getty Pc"		cons25	off secure
-ttyv6	"/usr/libexec/getty Pc"		cons25	off secure
-ttyv7	"/usr/libexec/getty Pc"		cons25	off secure
+ttyv4	"/usr/libexec/getty Pc"		cons25	on  secure
+ttyv5	"/usr/libexec/getty Pc"		cons25	on  secure
+ttyv6	"/usr/libexec/getty Pc"		cons25	on  secure
+ttyv7	"/usr/libexec/getty Pc"		cons25	on  secure
 ttyv8	"/usr/local/bin/xdm -nodaemon"	xterm	off secure
 # Serial terminals
 ttyu0	"/usr/libexec/getty std.19200"	dialup	on secure
