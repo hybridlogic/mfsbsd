@@ -499,7 +499,7 @@ if [ $image_selected == "2" ]; then
 fi
 if [ $image_selected == "3" ]; then
     # In case we're in the OVH rescue-pro environment, which has no free space.
-    mkdir $tmp_dir; mount_mfs -o rw -s 256M md $tmp_dir
+    mkdir $tmp_dir; mount_mfs -o rw -s 384M md $tmp_dir
     fetch -o $tmp_dir/$latest_image ftp://ftp.hybrid-cluster.com/$latest_image
     image_selected="$tmp_dir/$latest_image"
 fi
@@ -874,7 +874,8 @@ echo ""
 echo "Your IP is: $ip_addr - write this down, you will need it when you deploy."
 echo ""
 
-echo "Remove the media from the external drive, and press Enter to reboot..."
+echo "Remove the media from the external drive (or configure server to boot from hdd),"
+echo "and press Enter to reboot..."
 read
 shutdown -r now
 
