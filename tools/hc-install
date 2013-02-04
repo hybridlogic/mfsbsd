@@ -26,9 +26,6 @@ for X in `ls -1 /dev/ad* /dev/da* /dev/twed* /dev/aacd* /dev/mfid* /dev/amrd* 2>
 done
 echo "Done.  Continuing with the installation..."
 
-# TODO: Change this to 28 if we start installing onto FreeBSD 8.3 or later.
-ZFS_VERSION=15
-
 function hybrid_header()
 {
 clear
@@ -676,14 +673,14 @@ e.g. OVH Hybrid in vKVM, where SATA disks not visible):" 20 55 6\
 
 	#kein Software Raid
 	if [ ${#hdds_to_delete_array[@]} == "1" ]; then
-		echo "./zfsinstall -V $ZFS_VERSION -d ${hdds_to_delete_array[0]} -t $image_selected -p $tank_name -s $swap $zpool_size_suffix"
-		./zfsinstall -V $ZFS_VERSION -d ${hdds_to_delete_array[0]} -t $image_selected -p $tank_name -s $swap $zpool_size_suffix
+		echo "./zfsinstall -d ${hdds_to_delete_array[0]} -t $image_selected -p $tank_name -s $swap $zpool_size_suffix"
+		./zfsinstall -d ${hdds_to_delete_array[0]} -t $image_selected -p $tank_name -s $swap $zpool_size_suffix
 	fi
 
 	# Software Raid 1 mit 2 Platten
 	if [ ${#hdds_to_delete_array[@]} == "2" ]; then
-		echo "./zfsinstall -V $ZFS_VERSION -d ${hdds_to_delete_array[0]} -d ${hdds_to_delete_array[1]} -p $tank_name -t $image_selected -s $swap $zpool_size_suffix"
-		./zfsinstall -V $ZFS_VERSION -d ${hdds_to_delete_array[0]} -d ${hdds_to_delete_array[1]} -p $tank_name -t $image_selected -s $swap $zpool_size_suffix
+		echo "./zfsinstall -d ${hdds_to_delete_array[0]} -d ${hdds_to_delete_array[1]} -p $tank_name -t $image_selected -s $swap $zpool_size_suffix"
+		./zfsinstall -d ${hdds_to_delete_array[0]} -d ${hdds_to_delete_array[1]} -p $tank_name -t $image_selected -s $swap $zpool_size_suffix
 	fi
 
 	# Software Raid Z mit n Platten
@@ -702,11 +699,11 @@ e.g. OVH Hybrid in vKVM, where SATA disks not visible):" 20 55 6\
                 #fi
 
                 if [ $kind_of_raidz -eq 1 ]; then
-		  echo "./zfsinstall -V $ZFS_VERSION $all_harddrives -p $tank_name -r raidz -t $image_selected -s $swap $zpool_size_suffix"
-		  ./zfsinstall -V $ZFS_VERSION $all_harddrives -p $tank_name -r raidz -t $image_selected -s $swap $zpool_size_suffix
+		  echo "./zfsinstall $all_harddrives -p $tank_name -r raidz -t $image_selected -s $swap $zpool_size_suffix"
+		  ./zfsinstall $all_harddrives -p $tank_name -r raidz -t $image_selected -s $swap $zpool_size_suffix
                 elif [ $kind_of_raidz -eq 2 ]; then
-		  echo "./zfsinstall -V $ZFS_VERSION $all_harddrives -p $tank_name -r raidz2 -t $image_selected -s $swap $zpool_size_suffix"
-		  ./zfsinstall -V $ZFS_VERSION $all_harddrives -p $tank_name -r raidz2 -t $image_selected -s $swap $zpool_size_suffix
+		  echo "./zfsinstall $all_harddrives -p $tank_name -r raidz2 -t $image_selected -s $swap $zpool_size_suffix"
+		  ./zfsinstall $all_harddrives -p $tank_name -r raidz2 -t $image_selected -s $swap $zpool_size_suffix
                 else
                   echo "wrong kind of raidz chosen"
                   exit 1
