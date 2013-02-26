@@ -327,12 +327,14 @@ else
 fi
 echo " done"
 
-echo -n "Configuring ZFS bootcode on ${DEV} ..."
-    if ! /sbin/gpart bootcode -b ${MNT}/boot/pmbr -p ${MNT}/boot/gptzfsboot -i 1 ${DEV} > /dev/null; then
-    echo " error"
-    exit 1
-fi
-echo " done"
+for DEV in ${DEVS}; do
+    echo -n "Configuring ZFS bootcode on ${DEV} ..."
+        if ! /sbin/gpart bootcode -b ${MNT}/boot/pmbr -p ${MNT}/boot/gptzfsboot -i 1 ${DEV} > /dev/null; then
+        echo " error"
+        exit 1
+    fi
+    echo " done"
+done
 
 # Adjust configuration files
 
