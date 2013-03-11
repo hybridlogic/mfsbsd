@@ -501,7 +501,7 @@ if [ $image_selected == "3" ]; then
     fetch -o $tmp_dir/$latest_image ftp://ftp.hybrid-cluster.com/$latest_image
     image_selected="$tmp_dir/$latest_image"
 fi
-if [ $image_selected == "4" ]; then
+if [ $image_selected == "4" ]; then # XXX change this to http://ftp.hybrid-cluster.com once the site is installed
     # In case we're in the OVH rescue-pro environment, which has no free space.
     mkdir $tmp_dir; mount_mfs -o rw -s 384M md $tmp_dir
     fetch -o $tmp_dir/$latest_image http://hybrid-cluster.com/ftp/$latest_image
