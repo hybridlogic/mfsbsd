@@ -470,14 +470,15 @@ dialog --menu "Please select your install medium:" 11 55 5\
         1 "CDROM (/cdrom/9.1-PRERELEASE-amd64.tar.xz)" \
         2 "NFS (/nfs/mfsbsd/8.2-amd64-zfs.tar.xz; Hetzner)" \
         3 "FTP (ftp://ftp.hybrid-cluster.com/$latest_image)" \
-        4 "manual input" \
+        4 "HTTP (http://hybrid-cluster.com/ftp/$latest_image)" \
+        5 "manual input" \
     2>$tmpfile
 if [ $? == "1" ]; then
         echo cancelled
         exit 1
 fi
 image_selected=`cat $tmpfile`	
-if [ $image_selected == "4" ]; then
+if [ $image_selected == "5" ]; then
         dialog --inputbox "Please enter the path of the FreeBSD image (.xz):\n\
 " 10 60 / 2>$tmpfile	
     
@@ -498,6 +499,12 @@ if [ $image_selected == "3" ]; then
     # In case we're in the OVH rescue-pro environment, which has no free space.
     mkdir $tmp_dir; mount_mfs -o rw -s 384M md $tmp_dir
     fetch -o $tmp_dir/$latest_image ftp://ftp.hybrid-cluster.com/$latest_image
+    image_selected="$tmp_dir/$latest_image"
+fi
+if [ $image_selected == "4" ]; then
+    # In case we're in the OVH rescue-pro environment, which has no free space.
+    mkdir $tmp_dir; mount_mfs -o rw -s 384M md $tmp_dir
+    fetch -o $tmp_dir/$latest_image http://hybrid-cluster.com/ftp/$latest_image
     image_selected="$tmp_dir/$latest_image"
 fi
 
