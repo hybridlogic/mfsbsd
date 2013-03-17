@@ -466,7 +466,7 @@ mount_cd9660 /dev/cd0 /cdrom &>/dev/null # 9.1 version...
 latest_image='9-STABLE-r248369-c1318f0-amd64.tar.xz'
 tmp_dir='/root/tmpfs'
 dialog --menu "Please select your install medium:" 11 55 5\
-        1 "CDROM (/cdrom/9.1-PRERELEASE-amd64.tar.xz)" \
+        1 "CDROM (/cdrom/9.1-STABLE-amd64.tar.xz)" \
         2 "NFS (/nfs/mfsbsd/8.2-amd64-zfs.tar.xz; Hetzner)" \
         3 "FTP (ftp://ftp.hybrid-cluster.com/$latest_image)" \
         4 "HTTP (http://hybrid-cluster.com/ftp/$latest_image)" \
@@ -489,7 +489,7 @@ image_selected=`cat $tmpfile`
 fi
 
 if [ $image_selected == "1" ]; then
-    image_selected="/cdrom/9.1-PRERELEASE-amd64.tar.xz"
+    image_selected="/cdrom/9.1-STABLE-amd64.tar.xz"
 fi
 if [ $image_selected == "2" ]; then
     image_selected="/nfs/mfsbsd/8.2-amd64-zfs.tar.xz"
