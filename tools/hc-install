@@ -7,8 +7,8 @@ fi
 
 # Start by wiping out all disks.
 echo ""
-echo "WARNING: This script is about to render this server unbootable and"
-echo "destroy all data on it.  Press Enter to do this, otherwise press"
+echo "WARNING: This installer is about to render this server unbootable"
+echo "and destroy all data on it.  Press Enter to do this, otherwise press"
 echo "Alt+F2 to escape to the shell."
 echo ""
 read
