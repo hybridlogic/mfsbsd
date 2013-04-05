@@ -463,6 +463,7 @@ fi
 # Mount the cdrom if you can
 mount_cd9660 /dev/acd0 /cdrom &>/dev/null
 mount_cd9660 /dev/cd0 /cdrom &>/dev/null # 9.1 version...
+mount_cd9660 /dev/cd1 /cdrom &>/dev/null # 9.1 version...
 # http://ftp.hybrid-cluster.com/9-STABLE-r248369-21672db-amd64.iso
 latest_image='9-STABLE-r248369-f354c71-amd64.tar.xz'
 tmp_dir='/root/tmpfs'
