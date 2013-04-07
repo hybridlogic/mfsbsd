@@ -463,8 +463,7 @@ fi
 # Mount the cdrom if you can
 mount_cd9660 /dev/acd0 /cdrom &>/dev/null
 mount_cd9660 /dev/cd0 /cdrom &>/dev/null # 9.1 version...
-#latest_image='9-STABLE-r248369-c1318f0-amd64.tar.xz'
-latest_image='9-STABLE-r246022-7fd0a4d-amd64.tar.xz'
+latest_image='9-STABLE-r248369-3739bae-amd64.tar.xz'
 tmp_dir='/root/tmpfs'
 dialog --menu "Please select your install medium:" 11 55 5\
         1 "CDROM (/cdrom/9.1-STABLE-amd64.tar.xz)" \
