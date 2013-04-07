@@ -463,13 +463,14 @@ fi
 # Mount the cdrom if you can
 mount_cd9660 /dev/acd0 /cdrom &>/dev/null
 mount_cd9660 /dev/cd0 /cdrom &>/dev/null # 9.1 version...
+mount_cd9660 /dev/cd1 /cdrom &>/dev/null # 9.1 version...
 latest_image='HybridCluster-2.0-RELEASE-amd64.tar.xz'
 tmp_dir='/root/tmpfs'
 dialog --menu "Please select your install medium:" 11 55 5\
         1 "CDROM (/cdrom/9.1-STABLE-amd64.tar.xz)" \
         2 "NFS (/nfs/mfsbsd/8.2-amd64-zfs.tar.xz; Hetzner)" \
         3 "FTP (ftp://ftp.hybrid-cluster.com/$latest_image)" \
-        4 "HTTP (http://hybrid-cluster.com/ftp/$latest_image)" \
+        4 "HTTP (http://ftp.hybrid-cluster.com/$latest_image)" \
         5 "manual input" \
     2>$tmpfile
 if [ $? == "1" ]; then
@@ -500,10 +501,10 @@ if [ $image_selected == "3" ]; then
     fetch -o $tmp_dir/$latest_image ftp://ftp.hybrid-cluster.com/$latest_image
     image_selected="$tmp_dir/$latest_image"
 fi
-if [ $image_selected == "4" ]; then # XXX change this to http://ftp.hybrid-cluster.com once the site is installed
+if [ $image_selected == "4" ]; then
     # In case we're in the OVH rescue-pro environment, which has no free space.
     mkdir $tmp_dir; mount_mfs -o rw -s 384M md $tmp_dir
-    fetch -o $tmp_dir/$latest_image http://hybrid-cluster.com/ftp/$latest_image
+    fetch -o $tmp_dir/$latest_image http://ftp.hybrid-cluster.com/$latest_image
     image_selected="$tmp_dir/$latest_image"
 fi
 
