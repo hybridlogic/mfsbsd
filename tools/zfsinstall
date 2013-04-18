@@ -192,7 +192,7 @@ for DEV in ${DEVS}; do
 		exit 1
 	fi
 	/bin/sleep 1
-	if ! echo "a 1" | /sbin/fdisk -f - `echo ${DEV} |sed 's/.nop//g'` > /dev/null 2> /dev/null; then
+	if ! echo "a 1" | /sbin/fdisk -f - ${DEV} > /dev/null 2> /dev/null; then
 		echo " error"
 		exit 1
 	fi
@@ -228,6 +228,7 @@ done
 
 # Create zpool and zfs
 
+kldload geom_nop
 for DEV in ${DEVS}; do
 	PART=`/sbin/gpart show ${DEV} | /usr/bin/grep freebsd-zfs | /usr/bin/awk '{ print $3 }'`
 
@@ -239,7 +240,9 @@ for DEV in ${DEVS}; do
 	GPART=`/sbin/glabel list ${DEV}p${PART} | /usr/bin/grep gptid | /usr/bin/awk -F"gptid/" '{ print "gptid/" $2 }'`
 
 	GPARTS="${GPARTS} ${GPART}"
-	PARTS="${PARTS} ${DEV}p${PART}"
+
+    gnop create -S 4096 ${DEV}p${PART}
+	PARTS="${PARTS} ${DEV}p${PART}.nop"
 done
 
 echo -n "Creating ZFS pool ${POOL} on${PARTS} ..."

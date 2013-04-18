@@ -13,7 +13,6 @@ echo "Alt+F2 to escape to the shell."
 echo ""
 read
 
-kldload geom_nop
 sysctl kern.geom.debugflags=16
 for X in `ls -1 /dev/ada* /dev/da* /dev/twed* /dev/aacd* /dev/mfid* /dev/amrd* 2>/dev/null | grep -E '[a-z]{2}[0-9]+$'`; do
     echo "Wiping $X..."
@@ -24,7 +23,6 @@ for X in `ls -1 /dev/ada* /dev/da* /dev/twed* /dev/aacd* /dev/mfid* /dev/amrd* 2
     # And the last 10 meg
     skip=$(echo `diskinfo $X | cut -f 3` / 1024 - 10240 | bc)
     dd if=/dev/zero of=$X bs=1024 count=10240 seek=$skip &>/dev/null
-    gnop create -S 4096 $X
 done
 echo "Done.  Continuing with the installation..."
 
@@ -300,7 +298,7 @@ tmpfile=`mktemp /tmp/dialog.XXXXXX`
 
 # die Liste mit Festplatten wird erstellt
 
-disks=`ls -1 /dev/ada* /dev/da* /dev/twed* /dev/aacd* /dev/mfid* /dev/amrd* 2>/dev/null | grep -E '[a-z]{2}[0-9]+(\.nop)?$'`
+disks=`ls -1 /dev/ada* /dev/da* /dev/twed* /dev/aacd* /dev/mfid* /dev/amrd* 2>/dev/null | grep -E '[a-z]{2}[0-9]+$'`
 a=(`for disk in $disks; do echo $disk \`echo $disk | grep -oE '[0-9]+$'\`; done | sort -n -k 2 | cut -f1 -d' '`)
 
 #hdd_size=(`gpart show | grep '=>' | awk '{print $6}' | sed 's/[()]//g'`)
@@ -317,8 +315,7 @@ if [ $disk_sum -gt 3 ]; then
 	dialog --checklist "Please select one or more hard drives:\n\
 	for RAID 1 (Mirror)  please select 2 hard drives\n\
 	for RAID Z (like Raid 5) please select 3 hard drives\n\
-	for RAID Z2 (like Raid 6) please select 4 hard drives\n\
-    ** Select the .nop devices if you have 4K sector drives. **" 15 60 5 \
+	for RAID Z2 (like Raid 6) please select 4 hard drives" 15 60 5 \
         	$menuitems \
         	2>$tmpfile
 	if [ $? == "1" ]; then
@@ -329,8 +326,7 @@ if [ $disk_sum -gt 3 ]; then
 else 
 	dialog --checklist "Please select one or more hard drives:\n\
 	for RAID 1 (Mirror) please select 2 hard drives\n\
-	for RAID Z (like Raid 5) please select 3 hard drives\n\
-    ** Select the .nop devices if you have 4K sector drives. **" 15 60 5 \
+	for RAID Z (like Raid 5) please select 3 hard drives" 15 60 5 \
 		$menuitems \
 		2>$tmpfile
 	if [ $? == "1" ]; then
