@@ -14,7 +14,7 @@ echo ""
 read
 
 sysctl kern.geom.debugflags=16
-for X in `ls -1 /dev/ad* /dev/ada* /dev/da* /dev/twed* /dev/aacd* /dev/mfid* /dev/amrd* 2>/dev/null | grep -E '[a-z]{2}[0-9]+$'`; do
+for X in `ls -1 /dev/ad* /dev/da* /dev/twed* /dev/aacd* /dev/mfid* /dev/amrd* 2>/dev/null | grep -E '[a-z]{2}[0-9]+$'`; do
     echo "Wiping $X..."
     ./destroygeom -d $X &>/dev/null
     gmirror clear $X &>/dev/null
@@ -298,7 +298,7 @@ tmpfile=`mktemp /tmp/dialog.XXXXXX`
 
 # die Liste mit Festplatten wird erstellt
 
-disks=`ls -1 /dev/ad* /dev/ada* /dev/da* /dev/twed* /dev/aacd* /dev/mfid* /dev/amrd* 2>/dev/null | grep -E '[a-z]{2}[0-9]+$'`
+disks=`ls -1 /dev/ad* /dev/da* /dev/twed* /dev/aacd* /dev/mfid* /dev/amrd* 2>/dev/null | grep -E '[a-z]{2}[0-9]+$'`
 a=(`for disk in $disks; do echo $disk \`echo $disk | grep -oE '[0-9]+$'\`; done | sort -n -k 2 | cut -f1 -d' '`)
 
 #hdd_size=(`gpart show | grep '=>' | awk '{print $6}' | sed 's/[()]//g'`)
