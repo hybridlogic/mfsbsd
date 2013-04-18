@@ -192,11 +192,11 @@ for DEV in ${DEVS}; do
 		exit 1
 	fi
 	/bin/sleep 1
-	if ! /sbin/gpart set -a -i 1 ${DEV} > /dev/null 2> /dev/null; then
+	if ! /sbin/gpart add -t freebsd-boot -s 128 ${DEV} > /dev/null; then
 		echo " error"
 		exit 1
 	fi
-	if ! /sbin/gpart add -t freebsd-boot -s 128 ${DEV} > /dev/null; then
+	if ! /sbin/gpart set -a active -i 1 ${DEV} > /dev/null 2> /dev/null; then
 		echo " error"
 		exit 1
 	fi
