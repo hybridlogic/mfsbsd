@@ -511,7 +511,7 @@ fi
 if [ "$needs_download" = "yes" ] ; then
     # In case we're in the OVH rescue-pro environment, which has no free space.
     mkdir -p $tmp_dir && mount_mfs -o rw -s 384M md $tmp_dir
-    fetch -o $tmp_dir/image.tar.xz "$image_selected"
+    fetch -1 -a -o $tmp_dir/image.tar.xz "$image_selected"
     if [ $? -ne 0 ] ; then
         echo "Download of $image_selected to $tmp_dir/image.tar.xz failed" 1>&2
         exit 1
