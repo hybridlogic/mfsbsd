@@ -1,5 +1,13 @@
 #!/usr/local/bin/bash
 
+# preserve stderr
+exec 3>&2
+# redirect stderr to a log file
+LOGFILE=/tmp/install.log
+exec 2>$LOGFILE
+# now start logging what gets executed
+set -x
+
 # Get to the place where the zfsinstall script, etc lives.
 if [ -d "/root/bin" ]; then
     cd /root/bin;
@@ -10,6 +18,8 @@ echo ""
 echo "WARNING: This installer is about to render this server unbootable"
 echo "and destroy all data on it.  Press Enter to do this, otherwise press"
 echo "Alt+F2 to escape to the shell."
+echo ""
+echo "Note: standard error output is logged to $LOGFILE"
 echo ""
 read
 
