@@ -301,38 +301,39 @@ tmpfile=`mktemp /tmp/dialog.XXXXXX`
 disks=`ls -1 /dev/vtbd* /dev/ad* /dev/da* /dev/twed* /dev/aacd* /dev/mfid* /dev/mfis* /dev/amrd* 2>/dev/null | grep -E '[a-z]{2}[0-9]+$'`
 a=(`for disk in $disks; do echo $disk \`echo $disk | grep -oE '[0-9]+$'\`; done | sort -n -k 2 | cut -f1 -d' '`)
 
-#hdd_size=(`gpart show | grep '=>' | awk '{print $6}' | sed 's/[()]//g'`)
 n=0
 for item in ${a[@]}; do
-	menuitems="$menuitems $n $item off"
-	#menuitems="$menuitems $n $item---${hdd_size[$n]} off"
+	hdd_size=$(diskinfo $item | cut -f3) && hdd_size=$(($hdd_size / 1024 / 1024 / 1024))
+	hdd_size=${hdd_size:+" ($hdd_size GB)"}
+	menuitems="$menuitems $n '${item}${hdd_size}' off"
 	let n+=1
 done
 
 disk_sum=${#a[@]}
 if [ $disk_sum -gt 3 ]; then
-	dialog --checklist "Please select one or more hard drives:\n\
+	dialog_message="Please select one or more hard drives:\n\
 	for RAID 1 (Mirror)  please select 2 hard drives\n\
 	for RAID Z (like Raid 5) please select 3 hard drives\n\
-	for RAID Z2 (like Raid 6) please select 4 hard drives" 15 60 5 \
-        	$menuitems \
-        	2>$tmpfile
-	if [ $? == "1" ]; then
-        	echo cancelled
-        	exit 1
-	fi
-
-else 
-	dialog --checklist "Please select one or more hard drives:\n\
+	for RAID Z2 (like Raid 6) please select 4 hard drives"
+else
+	dialog_message="Please select one or more hard drives:\n\
 	for RAID 1 (Mirror) please select 2 hard drives\n\
-	for RAID Z (like Raid 5) please select 3 hard drives" 15 60 5 \
-		$menuitems \
-		2>$tmpfile
-	if [ $? == "1" ]; then
-		echo cancelled
-		exit 1
-	fi
+	for RAID Z (like Raid 5) please select 3 hard drives"
 fi
+
+# Note: we use 'eval' to force another parser run, so that
+# quotes in $menuitems are honored.  This also requires other
+# multi-word strings to be quoted twice.
+# Redirections must be escaped for the same reason as well.
+eval dialog --checklist "'$dialog_message'" \
+	15 60 5 \
+	$menuitems \
+	2\>$tmpfile
+if [ $? == "1" ]; then
+	echo cancelled
+	exit 1
+fi
+
 harddrives=`cat $tmpfile`
 
 hdds=(`for i in $harddrives; do echo $i | sed 's/"//g'; done`)
