@@ -309,8 +309,7 @@ for item in ${a[@]}; do
 	let n+=1
 done
 
-disk_sum=${#hdds[@]}
-
+disk_sum=${#a[@]}
 if [ $disk_sum -gt 3 ]; then
 	dialog --checklist "Please select one or more hard drives:\n\
 	for RAID 1 (Mirror)  please select 2 hard drives\n\
