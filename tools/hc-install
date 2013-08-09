@@ -510,9 +510,11 @@ if [ $image_selected == "2" ]; then
 fi
 if [ $image_selected == "3" ]; then
     image_selected="ftp://ftp.hybrid-cluster.com/$latest_image"
+    needs_download="yes"
 fi
 if [ $image_selected == "4" ]; then
     image_selected="http://ftp.hybrid-cluster.com/$latest_image"
+    needs_download="yes"
 fi
 
 if [ "$needs_download" = "maybe" ] ; then
