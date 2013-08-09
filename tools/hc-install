@@ -520,7 +520,7 @@ fi
 if [ "$needs_download" = "maybe" ] ; then
     [ -r "$image_selected" ] && needs_download="no"
 fi
-if [ "$needs_download" = "yes" ] ; then
+if [ "$needs_download" != "no" ] ; then
     # In case we're in the OVH rescue-pro environment, which has no free space.
     mkdir -p $tmp_dir && mount_mfs -o rw -s 384M md $tmp_dir
     fetch -1 -a -o $tmp_dir/image.tar.xz "$image_selected"
