@@ -14,7 +14,6 @@ KERNCONF?= GENERIC
 MFSROOT_FREE_INODES?=10%
 MFSROOT_FREE_BLOCKS?=10%
 MFSROOT_MAXSIZE?=64m
-ROOTPW?= mfsroot
 
 # If you want to build your own kernel and make you own world, you need to set
 # -DCUSTOM or CUSTOM=1
@@ -146,8 +145,8 @@ _BOOTDIR=	${_ROOTDIR}/boot
 .if defined(ROOTHACK)
 _DESTDIR=	${_ROOTDIR}/rw
 WITHOUT_RESCUE=1
-MFSROOT_FREE_INODES=1%
-MFSROOT_FREE_BLOCKS=1%
+MFSROOT_FREE_INODES?=1%
+MFSROOT_FREE_BLOCKS?=1%
 .else
 _DESTDIR=	${_ROOTDIR}
 .endif
@@ -310,7 +309,7 @@ ${WRKDIR}/.config_done:
 	@echo -n "Installing configuration scripts and files ..."
 .for FILE in loader.conf rc.conf resolv.conf interfaces.conf ttys
 . if !exists(${CFGDIR}/${FILE}) && !exists(${CFGDIR}/${FILE}.sample)
-	@echo "Missing ${CFGDIR}/$${FILE}.sample" && exit 1
+	@echo "Missing ${CFGDIR}/${FILE}.sample" && exit 1
 . endif
 .endfor
 .if defined(SE)
@@ -362,7 +361,9 @@ ${WRKDIR}/.config_done:
 .else
 	@${TOUCH} ${_DESTDIR}/etc/fstab
 .endif
+.if defined(ROOTPW)
 	@echo ${ROOTPW} | ${PW} -V ${_DESTDIR}/etc usermod root -h 0
+.endif
 	@echo PermitRootLogin yes >> ${_DESTDIR}/etc/ssh/sshd_config
 	@echo 127.0.0.1 localhost > ${_DESTDIR}/etc/hosts
 	@${TOUCH} ${WRKDIR}/.config_done
