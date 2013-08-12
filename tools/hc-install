@@ -485,8 +485,8 @@ if [ $? == "1" ]; then
         echo cancelled
         exit 1
 fi
-image_selected=`cat $tmpfile`	
-if [ $image_selected == "5" ]; then
+option_selected=`cat $tmpfile`
+if [ $option_selected == "5" ]; then
     dialog --inputbox "Please enter the path of the FreeBSD image (.xz):\n\
 " 10 60 / 2>$tmpfile	
     
@@ -498,19 +498,19 @@ if [ $image_selected == "5" ]; then
     needs_download="maybe"
 fi
 
-if [ $image_selected == "1" ]; then
+if [ $option_selected == "1" ]; then
     image_selected="/cdrom/9.1-STABLE-amd64.tar.xz"
     needs_download="no"
 fi
-if [ $image_selected == "2" ]; then
+if [ $option_selected == "2" ]; then
     image_selected="/nfs/mfsbsd/8.2-amd64-zfs.tar.xz"
     needs_download="no"
 fi
-if [ $image_selected == "3" ]; then
+if [ $option_selected == "3" ]; then
     image_selected="ftp://ftp.hybrid-cluster.com/$latest_image"
     needs_download="yes"
 fi
-if [ $image_selected == "4" ]; then
+if [ $option_selected == "4" ]; then
     image_selected="http://ftp.hybrid-cluster.com/$latest_image"
     needs_download="yes"
 fi
