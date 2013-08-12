@@ -5,6 +5,8 @@ exec 3>&2
 # redirect stderr to a log file
 LOGFILE=/tmp/install.log
 exec 2>>$LOGFILE
+# set a more useful tracing prompt
+PS4='[${LINENO}]+ '
 # now start logging what gets executed
 set -x
 
