@@ -26,7 +26,13 @@ echo ""
 read
 
 sysctl kern.geom.debugflags=16
-for X in `ls -1 /dev/vtbd* /dev/ad* /dev/da* /dev/twed* /dev/aacd* /dev/mfid* /dev/mfis* /dev/amrd* 2>/dev/null | grep -E '[a-z]{2}[0-9]+$'`; do
+sysctl -n kern.disks | tr ' ' '\n' | while read X ; do
+    case $X in
+        cd[0-9]*)
+            continue
+        ;;
+    esac
+    X="/dev/$X"
     echo "Wiping $X..."
     ./destroygeom -d $X &>/dev/null
     gmirror clear $X &>/dev/null || true
@@ -310,8 +316,8 @@ tmpfile=`mktemp /tmp/dialog.XXXXXX`
 
 # die Liste mit Festplatten wird erstellt
 
-disks=`ls -1 /dev/vtbd* /dev/ad* /dev/da* /dev/twed* /dev/aacd* /dev/mfid* /dev/mfis* /dev/amrd* 2>/dev/null | grep -E '[a-z]{2}[0-9]+$'`
-a=(`for disk in $disks; do echo $disk \`echo $disk | grep -oE '[0-9]+$'\`; done | sort -n -k 2 | cut -f1 -d' '`)
+disks=$(sysctl -n kern.disks | sed -e 's/[[:<:]]cd[0-9][^ ]* *//g' -e 's/  *$//')
+a=(`for disk in $disks; do echo /dev/$disk \`echo $disk | grep -oE '[0-9]+$'\`; done | sort -n -k 2 | cut -f1 -d' '`)
 
 n=0
 for item in ${a[@]}; do
