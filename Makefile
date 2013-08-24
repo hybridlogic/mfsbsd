@@ -230,8 +230,8 @@ ${WRKDIR}/.install_done:
 .if defined(CUSTOM)
 	@echo -n "Installing world and kernel KERNCONF=${KERNCONF} ..."
 	@cd ${SRC_DIR} && \
-	${INSTALLENV} make installworld distribution DESTDIR="${_DESTDIR}" TARGET=${TARGET} && \
-	${INSTALLENV} make installkernel DESTDIR="${_ROOTDIR}" TARGET=${TARGET}
+	${INSTALLENV} make -s installworld distribution DESTDIR="${_DESTDIR}" TARGET=${TARGET} && \
+	${INSTALLENV} make -s installkernel DESTDIR="${_ROOTDIR}" TARGET=${TARGET}
 .endif
 .if defined(SE)
 	@echo -n "Creating FreeBSD distribution image ..."
