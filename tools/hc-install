@@ -750,6 +750,10 @@ e.g. OVH Hybrid in vKVM, where SATA disks not visible):" 20 55 6\
                   exit 1
                 fi
 	fi
+	if [ $? -ne 0 ] ; then
+		echo "zfsinstall failed"
+		exit 1
+	fi
 	echo "DONE"
 fi
 
