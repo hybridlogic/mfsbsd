@@ -918,4 +918,5 @@ echo "and press Enter to reboot..."
 read
 rm -f $LOGFILE
 shutdown -r now
-
+# after shutdown command returns do not quit the script
+sleep 3600
