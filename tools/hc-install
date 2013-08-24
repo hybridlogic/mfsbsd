@@ -916,5 +916,6 @@ echo ""
 echo "Remove the media from the external drive (or configure server to boot from hdd),"
 echo "and press Enter to reboot..."
 read
+rm -f $LOGFILE
 shutdown -r now
 
