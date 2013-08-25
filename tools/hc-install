@@ -772,6 +772,8 @@ cat >> /mnt/boot/loader.conf << EOF
 geom_mirror_load="YES"
 vfs.zfs.zio.use_uma="0"
 kern.cam.ada.legacy_aliases=0
+# force HybridCluster branded loader
+loader_logo="orbbw"
 EOF
 echo "DONE"
 
