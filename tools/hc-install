@@ -481,9 +481,10 @@ fi
 # Mount the cdrom if you can
 mount -t cd9660 /dev/iso9660/MFSBSD /cdrom &>/dev/null # 9.1 version...
 latest_image='HybridCluster-2.0-RELEASE-amd64.tar.xz'
+builtin_image="HybridCluster-$(uname -p).tar.xz"
 tmp_dir='/root/tmpfs'
 dialog --menu "Please select your install medium:" 11 55 5\
-        1 "CDROM (/cdrom/9.1-STABLE-amd64.tar.xz)" \
+        1 "CDROM (/cdrom/$builtin_image)" \
         2 "NFS (/nfs/mfsbsd/8.2-amd64-zfs.tar.xz; Hetzner)" \
         3 "FTP (ftp://ftp.hybrid-cluster.com/$latest_image)" \
         4 "HTTP (http://ftp.hybrid-cluster.com/$latest_image)" \
@@ -507,7 +508,7 @@ if [ $option_selected == "5" ]; then
 fi
 
 if [ $option_selected == "1" ]; then
-    image_selected="/cdrom/9.1-STABLE-amd64.tar.xz"
+    image_selected="/cdrom/$builtin_image"
     needs_download="no"
 fi
 if [ $option_selected == "2" ]; then
