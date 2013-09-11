@@ -26,23 +26,6 @@ echo ""
 read
 
 sysctl kern.geom.debugflags=16
-sysctl -n kern.disks | tr ' ' '\n' | while read X ; do
-    case $X in
-        cd[0-9]*)
-            continue
-        ;;
-    esac
-    X="/dev/$X"
-    echo "Wiping $X..."
-    ./destroygeom -d $X &>/dev/null
-    gmirror clear $X &>/dev/null || true
-    # Zero out the first 10 meg
-    dd if=/dev/zero of=$X bs=1024 count=10240 &>/dev/null
-    # And the last 10 meg
-    skip=$(echo `diskinfo $X | cut -f 3` / 1024 - 10240 | bc)
-    dd if=/dev/zero of=$X bs=1024 count=10240 seek=$skip &>/dev/null
-done
-echo "Done.  Continuing with the installation..."
 
 function hybrid_header()
 {
