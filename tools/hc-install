@@ -297,20 +297,32 @@ function get_network_address() {
     
 tmpfile=`mktemp /tmp/dialog.XXXXXX`
 
-# die Liste mit Festplatten wird erstellt
+# List of all hard disks in the system
+disks=''
+for X in $(sysctl -n kern.disks | tr ' ' '\n' | sort) ; do
+    # Skip optical devices
+    case $X in cd[0-9]*) continue ;; esac
+    X="/dev/$X"
 
-disks=$(sysctl -n kern.disks | sed -e 's/\( cd[0-9][^ ]*\)\{1,\} / /g' -e 's/^cd[0-9][^ ]* //' -e 's/ cd[0-9][^ ]*$//')
-a=(`for disk in $disks; do echo /dev/$disk \`echo $disk | grep -oE '[0-9]+$'\`; done | sort -n -k 2 | cut -f1 -d' '`)
+    #skip disk drives without media
+    if ! diskinfo $X > /dev/null 2>&1 ; then
+	continue
+    fi
+
+    disks="${disks:+${disks} }${X}"
+done
+a=($disks)
 
 n=0
-for item in ${a[@]}; do
-	hdd_size=$(diskinfo $item | cut -f3) && hdd_size=$(($hdd_size / 1024 / 1024 / 1024))
+for item in ${disks}; do
+	hdd_size=$(diskinfo $item | cut -f3)
+	[ -n "$hdd_size" ] && hdd_size=$(($hdd_size / 1024 / 1024 / 1024))
 	hdd_size=${hdd_size:+" ($hdd_size GB)"}
 	menuitems="$menuitems $n '${item}${hdd_size}' off"
-	let n+=1
+	n=$(($n + 1))
 done
+disk_sum=${n}
 
-disk_sum=${#a[@]}
 if [ $disk_sum -gt 3 ]; then
 	dialog_message="Please select one or more hard drives:\n\
 	for RAID 1 (Mirror)  please select 2 hard drives\n\
