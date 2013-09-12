@@ -179,7 +179,7 @@ if [ "${LEGACY}" = "1" ]; then
 	ALTROOT=
 	ROOTMNT=legacy
 else
-	ALTROOT="-o altroot=${MNT} -o cachefile=/boot/zfs/zpool.cache"
+	ALTROOT="-R ${MNT}"
 	ROOTMNT=/
 fi
 
@@ -366,40 +366,40 @@ if [ "${LEGACY}" != "1" ]; then
 fi
 echo " done"
 
-echo -n "Copying /boot/zfs/zpool.cache ..."
-if [ -n "${LEGACY}" ]; then
-	for FS in ${FS_LIST}; do
-		/sbin/umount ${MNT}/${FS} > /dev/null 2> /dev/null
-	done
-	/sbin/umount ${MNT} > /dev/null 2> /dev/null
-fi
-if ! /sbin/zpool export ${POOL} > /dev/null 2> /dev/null; then
-	echo " error exporting pool"
-	exit 1
-fi
-if ! /sbin/zpool import ${ALTROOT} ${POOL} > /dev/null 2> /dev/null; then
-	echo " error importing pool"
-	exit 1
-fi
-if [ -n "${LEGACY}" ]; then
-	if ! /sbin/mount -t zfs ${POOL}/root ${MNT} > /dev/null 2> /dev/null; then
-		echo " error mounting ${POOL}/root"
-		exit 1
-	fi
-fi
-if ! /bin/cp /boot/zfs/zpool.cache ${MNT}/boot/zfs/ > /dev/null 2> /dev/null; then
-	echo " error copying zpool.cache"
-	exit 1
-fi
-if [ -n "${LEGACY}" ]; then
-	for FS in ${FS_LIST}; do
-		if ! /sbin/mount -t zfs ${POOL}/${FS} ${MNT}/${FS} > /dev/null 2> /dev/null; then
-		echo " error mounting ${POOL}/${FS}"
-		exit 1
-		fi
-	done
-fi
-echo " done"
+#echo -n "Copying /boot/zfs/zpool.cache ..."
+#if [ -n "${LEGACY}" ]; then
+#	for FS in ${FS_LIST}; do
+#		/sbin/umount ${MNT}/${FS} > /dev/null 2> /dev/null
+#	done
+#	/sbin/umount ${MNT} > /dev/null 2> /dev/null
+#fi
+#if ! /sbin/zpool export ${POOL} > /dev/null 2> /dev/null; then
+#	echo " error exporting pool"
+#	exit 1
+#fi
+#if ! /sbin/zpool import ${ALTROOT} ${POOL} > /dev/null 2> /dev/null; then
+#	echo " error importing pool"
+#	exit 1
+#fi
+#if [ -n "${LEGACY}" ]; then
+#	if ! /sbin/mount -t zfs ${POOL}/root ${MNT} > /dev/null 2> /dev/null; then
+#		echo " error mounting ${POOL}/root"
+#		exit 1
+#	fi
+#fi
+#if ! /bin/cp /boot/zfs/zpool.cache ${MNT}/boot/zfs/ > /dev/null 2> /dev/null; then
+#	echo " error copying zpool.cache"
+#	exit 1
+#fi
+#if [ -n "${LEGACY}" ]; then
+#	for FS in ${FS_LIST}; do
+#		if ! /sbin/mount -t zfs ${POOL}/${FS} ${MNT}/${FS} > /dev/null 2> /dev/null; then
+#		echo " error mounting ${POOL}/${FS}"
+#		exit 1
+#		fi
+#	done
+#fi
+#echo " done"
 
 # Mount devfs for post-configuration
 
