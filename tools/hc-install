@@ -26,13 +26,16 @@ echo ""
 read
 
 sysctl kern.geom.debugflags=16
-sysctl -n kern.disks | tr ' ' '\n' | while read X ; do
-    case $X in
-        cd[0-9]*)
-            continue
-        ;;
-    esac
+for X in $(sysctl -n kern.disks) ; do
+    # Skip optical devices
+    case $X in cd[0-9]*) continue ;; esac
     X="/dev/$X"
+
+    #skip disk drives without media
+    if ! diskinfo $X > /dev/null 2>&1 ; then
+	continue
+    fi
+
     echo "Wiping $X..."
     ./destroygeom -d $X &>/dev/null
     gmirror clear $X &>/dev/null || true
