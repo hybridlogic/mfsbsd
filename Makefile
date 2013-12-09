@@ -65,6 +65,7 @@ MAKEFS=/usr/sbin/makefs
 MKISOFS=/usr/local/bin/mkisofs
 SSHKEYGEN=/usr/bin/ssh-keygen
 SYSCTL=/sbin/sysctl
+PKG_ADD=/usr/sbin/pkg_add
 #
 CURDIR!=${PWD}
 WRKDIR?=${CURDIR}/tmp
@@ -297,7 +298,7 @@ ${WRKDIR}/.packages_done:
 	@if [ -d "${_DESTDIR}/packages" ]; then \
 		echo -n "Installing user packages ..."; \
 		cd ${_DESTDIR}/packages && for FILE in *; do \
-			env PKG_PATH=/packages pkg_add -fi -C ${_DESTDIR} /packages/$${FILE} > /dev/null; \
+			env PKG_PATH=/packages ${PKG_ADD} -fi -C ${_DESTDIR} /packages/$${FILE} > /dev/null; \
 		done; \
 		rm -rf ${_DESTDIR}/packages; \
 		echo " done"; \
