@@ -400,7 +400,7 @@ roothack: ${WRKDIR}/roothack/roothack
 ${WRKDIR}/roothack/roothack:
 .if !defined(ROOTHACK_PREBUILT)
 	@${MKDIR} -p ${WRKDIR}/roothack
-	@cd ${TOOLSDIR}/roothack && env MAKEOBJDIR=${WRKDIR}/roothack make
+	@cd ${TOOLSDIR}/roothack && env -u MAKEOBJDIRPREFIX MAKEOBJDIR=${WRKDIR}/roothack make
 .endif
 
 install-roothack: compress-usr roothack ${WRKDIR}/.install-roothack_done
